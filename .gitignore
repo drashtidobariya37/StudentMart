@@ -45,3 +45,5 @@ desktop.ini
 
 # ─── Old app/ folder at root (removed after restructure) ──────────────────────
 /app/
+
+upload_to_github.bat
