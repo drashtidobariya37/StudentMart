@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Urgent Requests Moderation - Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color: var(--primary-navy);">Urgent Need Moderation Queue</h1>
+      <p class="text-muted mb-0">Review urgent requests for compliance with campus safety and anti-cheating policies.</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm">&larr; Back to Admin Dashboard</a>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="mb-3 d-flex gap-2">
+    <a href="{{ url_for('admin.urgent') }}" class="btn btn-sm {% if not selected_status %}btn-primary{% else %}btn-outline{% endif %}">All</a>
+    <a href="{{ url_for('admin.urgent', status='Approved') }}" class="btn btn-sm {% if selected_status == 'Approved' %}btn-primary{% else %}btn-outline{% endif %}">Approved</a>
+    <a href="{{ url_for('admin.urgent', status='Flagged') }}" class="btn btn-sm {% if selected_status == 'Flagged' %}btn-primary{% else %}btn-outline{% endif %}">Flagged</a>
+    <a href="{{ url_for('admin.urgent', status='Rejected') }}" class="btn btn-sm {% if selected_status == 'Rejected' %}btn-primary{% else %}btn-outline{% endif %}">Rejected</a>
+  </div>
+
+  <div class="card p-0">
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Item &amp; Urgency</th>
+            <th>Requester / Campus</th>
+            <th>Location</th>
+            <th>Expires</th>
+            <th>Status</th>
+            <th>Moderation</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if urgent_requests %}
+            {% for req in urgent_requests %}
+              <tr>
+                <td>#{{ req.id }}</td>
+                <td>
+                  <a href="{{ url_for('urgent.detail', request_id=req.id) }}" class="fw-bold text-dark text-decoration-none">
+                    {{ req.title }}
+                  </a>
+                  <div class="text-muted" style="font-size: 0.82rem;">{{ req.category }} &bull; {{ req.urgency }}</div>
+                </td>
+                <td>
+                  <div>{{ req.user.display_name }}</div>
+                  <div class="text-muted" style="font-size: 0.8rem;">{{ req.display_college }}</div>
+                </td>
+                <td>{{ req.city }}, {{ req.state }}</td>
+                <td>{{ req.time_remaining_str }}</td>
+                <td>
+                  <span class="badge {% if req.status == 'Active' %}badge-available{% elif req.status == 'Fulfilled' %}badge-success{% else %}badge-secondary{% endif %}">
+                    {{ req.status }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge {% if req.moderation_status == 'Approved' %}badge-success{% elif req.moderation_status == 'Flagged' %}badge-warning{% else %}badge-danger{% endif %}">
+                    {{ req.moderation_status }}
+                  </span>
+                </td>
+                <td>
+                  <form action="{{ url_for('admin.moderate_urgent', request_id=req.id) }}" method="POST" class="d-inline-flex gap-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if req.moderation_status != 'Approved' %}
+                      <button type="submit" name="action" value="Approved" class="btn btn-xs btn-outline-success" title="Approve">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    {% endif %}
+                    {% if req.moderation_status != 'Flagged' %}
+                      <button type="submit" name="action" value="Flagged" class="btn btn-xs btn-outline-warning" title="Flag">
+                        <i class="bi bi-flag"></i>
+                      </button>
+                    {% endif %}
+                    {% if req.moderation_status != 'Rejected' %}
+                      <button type="submit" name="action" value="Rejected" class="btn btn-xs btn-outline-danger" title="Reject / Cancel">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No urgent requests found in this queue.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}About Student Mart &bull; B.Tech Computer Engineering Capstone{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 40px;">
+  <div style="margin-bottom: 30px;">
+    <span class="badge badge-demo-sample" style="font-size: 0.85rem; padding: 4px 10px; margin-bottom: 12px; display: inline-block;">
+      <i class="bi bi-mortarboard-fill"></i> B.Tech Computer Engineering &bull; 3rd Year Capstone Project
+    </span>
+    <h1 style="font-size: 2.2rem; color: var(--primary-navy); margin-bottom: 10px;">About Student Mart</h1>
+    <p style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.6;">
+      An authentic multi-college peer-to-peer marketplace built to solve campus textbook waste and expensive student essentials in India.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 28px; margin-bottom: 28px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px;">1. Project Background &amp; Problem Statement</h2>
+    <p style="color: var(--text-muted); line-height: 1.65; margin-bottom: 14px;">
+      Every academic year across Indian engineering and university campuses, senior students finish their semesters with expensive textbooks 
+      (like <em>Higher Engineering Mathematics by B.S. Grewal</em>, <em>Operating Systems by Silberschatz</em>), mini drafters, engineering drawing sheets, 
+      Casio fx-991EX calculators, and hostel appliances that they no longer need. Meanwhile, incoming juniors purchase the exact same items at full retail price.
+    </p>
+    <p style="color: var(--text-muted); line-height: 1.65;">
+      Traditional general classified platforms like OLX or Quikr are filled with commercial resellers, delivery courier hassles, and scam risks. 
+      <strong>Student Mart</strong> was developed to create a dedicated, hyper-local, college-verified ecosystem where students hand off goods directly inside campus premises.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 28px; margin-bottom: 28px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px;">2. Architecture &amp; Technology Stack</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px;">
+      <div style="background-color: var(--bg-slate); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <h4 style="color: var(--primary-navy); margin-bottom: 8px;"><i class="bi bi-server"></i> Backend Layer</h4>
+        <ul style="color: var(--text-muted); font-size: 0.9rem; padding-left: 20px; line-height: 1.6;">
+          <li>Python 3.11 with Flask Web Framework</li>
+          <li>Flask-SQLAlchemy (ORM) with SQLite database</li>
+          <li>Werkzeug secure password hashing</li>
+          <li>HMAC-SHA256 signature verification</li>
+          <li>Custom CSRF defense &amp; Rate-Limiting</li>
+        </ul>
+      </div>
+
+      <div style="background-color: var(--bg-slate); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <h4 style="color: var(--primary-navy); margin-bottom: 8px;"><i class="bi bi-window"></i> Frontend Layer</h4>
+        <ul style="color: var(--text-muted); font-size: 0.9rem; padding-left: 20px; line-height: 1.6;">
+          <li>Semantic HTML5 &amp; Modern Responsive CSS3</li>
+          <li>Custom Navy &amp; Terracotta Theme</li>
+          <li>Pure Vanilla JavaScript (No heavy frameworks)</li>
+          <li>Real-time chat polling with auto-scroll</li>
+          <li>Client-side preview + Server-side validation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="background-color: var(--accent-terracotta-soft); border: 1px solid #f3d5c8; padding: 18px; border-radius: var(--radius-md); font-size: 0.9rem; color: var(--accent-terracotta-dark); line-height: 1.6;">
+      <strong>Payment &amp; Escrow Model:</strong> Integrated with official Razorpay Sandbox APIs (when test credentials are provided). 
+      To guarantee zero dead-ends during evaluation, the platform includes a built-in <em>Campus Safe Demo Escrow</em> engine with realistic state machine transitions: <code>PENDING &rarr; ACCEPTED &rarr; COMPLETED / DISPUTED</code>.
+    </div>
+  </div>
+
+  <div class="card" style="padding: 28px; margin-bottom: 28px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px;">3. Trust, Safety &amp; Privacy Design Principles</h2>
+    <ul style="color: var(--text-muted); line-height: 1.7; padding-left: 20px; font-size: 0.92rem;">
+      <li><strong>Data Minimization:</strong> Student phone numbers and personal emails are never broadcast publicly on listing cards. All initial communication occurs through private, encrypted-in-transit buyer-seller chat threads.</li>
+      <li><strong>No Fabricated Trust Badges:</strong> The platform does not display fake 5-star ratings or unverified seller badges. "Verified Student" badges are strictly tied to confirmed university email domains or admin audit.</li>
+      <li><strong>Daylight Handoffs:</strong> Design guidelines strongly encourage all transactions to occur at officially recognized public meeting spots (e.g. Central Library, Main Canteen, Student Activity Center).</li>
+      <li><strong>Admin Moderation Workflow:</strong> A protected administrative portal allows reviewing reported items, moderating questionable content, and arbitrating buyer-seller disputes.</li>
+    </ul>
+  </div>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="{{ url_for('listings.browse') }}" class="btn btn-primary btn-lg">
+      <i class="bi bi-grid-3x3-gap"></i> Explore Live Campus Catalog
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Listings Moderation &bull; Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);"><a href="{{ url_for('admin.dashboard') }}" style="color: inherit; text-decoration: none;">&larr; Admin Dashboard</a></div>
+      <h1 style="font-size: 1.85rem; color: var(--primary-navy); margin-top: 4px;">Listings Moderation Queue</h1>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div style="display: flex; gap: 8px;">
+      <a href="{{ url_for('admin.listings') }}" class="btn {% if not selected_status %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All</a>
+      <a href="{{ url_for('admin.listings', status='Approved') }}" class="btn {% if selected_status == 'Approved' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Approved</a>
+      <a href="{{ url_for('admin.listings', status='Flagged') }}" class="btn {% if selected_status == 'Flagged' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Flagged</a>
+      <a href="{{ url_for('admin.listings', status='Rejected') }}" class="btn {% if selected_status == 'Rejected' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Rejected</a>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 24px;">
+    {% if listings %}
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Seller</th>
+              <th>Campus</th>
+              <th>Status</th>
+              <th>Moderation</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in listings %}
+              <tr>
+                <td>#{{ item.id }}</td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="{{ url_for('static', filename=item.primary_image_url) }}" alt="" style="width: 40px; height: 40px; border-radius: var(--radius-sm); object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/misc.svg') }}';">
+                    <a href="{{ url_for('listings.detail', listing_id=item.id) }}" target="_blank" style="font-weight: 600; color: var(--primary-navy); text-decoration: none;">
+                      {{ item.title[:30] }}{% if item.title|length > 30 %}...{% endif %}
+                    </a>
+                  </div>
+                </td>
+                <td>{{ item.category.split('&')[0] }}</td>
+                <td style="font-weight: 700;">{{ item.price | currency_inr }}</td>
+                <td>{{ item.seller.display_name }}</td>
+                <td>{{ item.display_college }}</td>
+                <td>
+                  <span class="badge {% if item.status == 'Available' %}badge-available{% elif item.status == 'Reserved' %}badge-reserved{% else %}badge-sold{% endif %}">
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge {% if item.moderation_status == 'Approved' %}badge-available{% elif item.moderation_status == 'Flagged' %}badge-reserved{% else %}badge-danger{% endif %}">
+                    {{ item.moderation_status }}
+                  </span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <form action="{{ url_for('admin.moderate_listing', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="Approved">
+                      <button type="submit" class="btn btn-outline btn-sm" title="Approve Listing" style="color: var(--primary-navy); padding: 4px 8px;">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </form>
+
+                    <form action="{{ url_for('admin.moderate_listing', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="Flagged">
+                      <button type="submit" class="btn btn-outline btn-sm" title="Flag for Review" style="color: #d97706; padding: 4px 8px;">
+                        <i class="bi bi-flag"></i>
+                      </button>
+                    </form>
+
+                    <form action="{{ url_for('admin.moderate_listing', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="action" value="Rejected">
+                      <button type="submit" class="btn btn-outline btn-sm" title="Reject / Hide Listing" style="color: #dc2626; padding: 4px 8px;">
+                        <i class="bi bi-eye-slash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 30px 0;">No listings found for this status.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

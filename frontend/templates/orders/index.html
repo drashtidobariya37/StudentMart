@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 4px;">Orders &amp; Transactions</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Track campus handoffs, escrow holds, and order completions</p>
+  </div>
+
+  <!-- Tab Buttons -->
+  <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+    <a href="{{ url_for('orders.index', tab='purchases') }}" class="btn {% if active_tab == 'purchases' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+      <i class="bi bi-bag"></i> My Purchases ({{ purchases|length }})
+    </a>
+    <a href="{{ url_for('orders.index', tab='sales') }}" class="btn {% if active_tab == 'sales' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+      <i class="bi bi-tag"></i> My Sales ({{ sales|length }})
+    </a>
+  </div>
+
+  {% if active_tab == 'purchases' %}
+    <!-- Purchases List -->
+    {% if purchases %}
+      {% for order in purchases %}
+        <div class="order-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">{{ order.order_number }}</span>
+              <h3 style="font-size: 1.15rem; color: var(--primary-navy); margin-top: 2px;">{{ order.listing.title }}</h3>
+            </div>
+
+            <div>
+              {% if order.status == 'PENDING' %}
+                <span class="badge badge-reserved">Pending Seller Acceptance</span>
+              {% elif order.status == 'ACCEPTED' %}
+                <span class="badge badge-available">Accepted &bull; Ready for Campus Handoff</span>
+              {% elif order.status == 'COMPLETED' %}
+                <span class="badge badge-available" style="background-color: #f4efe6; color: #1e293b; border: 1px solid #dcd4c5;">Completed</span>
+              {% elif order.status == 'DISPUTED' %}
+                <span class="badge" style="background-color: #fef2f2; color: #b91c1c;">In Dispute Review</span>
+              {% else %}
+                <span class="badge badge-sold">Cancelled</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; background-color: var(--bg-slate); padding: 12px; border-radius: var(--radius-md);">
+            <div><strong>Amount:</strong> <span style="color: var(--primary-navy); font-weight: 700;">{{ order.amount | currency_inr }}</span></div>
+            <div><strong>Seller:</strong> {{ order.seller.display_name }} ({{ order.seller.display_college }})</div>
+            <div><strong>Pickup Spot:</strong> {{ order.pickup_location }}</div>
+            <div><strong>Payment Mode:</strong> {{ order.payment_method }}</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 0.8rem; color: var(--text-light);">
+              Ordered on {{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}
+            </div>
+            <a href="{{ url_for('orders.detail', order_id=order.id) }}" class="btn btn-primary btn-sm">
+              View Order Timeline &rarr;
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="card" style="padding: 50px 20px; text-align: center; border: 1px dashed var(--border-color);">
+        <p style="color: var(--text-muted); margin-bottom: 14px;">You haven't placed any purchases yet.</p>
+        <a href="{{ url_for('listings.browse') }}" class="btn btn-primary">Browse Campus Items</a>
+      </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Sales List -->
+    {% if sales %}
+      {% for order in sales %}
+        <div class="order-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">{{ order.order_number }}</span>
+              <h3 style="font-size: 1.15rem; color: var(--primary-navy); margin-top: 2px;">{{ order.listing.title }}</h3>
+            </div>
+
+            <div>
+              {% if order.status == 'PENDING' %}
+                <span class="badge badge-reserved">Awaiting Your Acceptance</span>
+              {% elif order.status == 'ACCEPTED' %}
+                <span class="badge badge-available">Accepted &bull; Coordinate Handoff</span>
+              {% elif order.status == 'COMPLETED' %}
+                <span class="badge badge-available" style="background-color: #f4efe6; color: #1e293b; border: 1px solid #dcd4c5;">Completed</span>
+              {% elif order.status == 'DISPUTED' %}
+                <span class="badge" style="background-color: #fef2f2; color: #b91c1c;">Disputed</span>
+              {% else %}
+                <span class="badge badge-sold">Cancelled</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; background-color: var(--bg-slate); padding: 12px; border-radius: var(--radius-md);">
+            <div><strong>Sale Amount:</strong> <span style="color: var(--primary-navy); font-weight: 700;">{{ order.amount | currency_inr }}</span></div>
+            <div><strong>Buyer:</strong> {{ order.buyer.display_name }} ({{ order.buyer.display_college }})</div>
+            <div><strong>Meeting Location:</strong> {{ order.pickup_location }}</div>
+            <div><strong>Escrow Status:</strong> {{ order.payment_status }}</div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 0.8rem; color: var(--text-light);">
+              Created on {{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}
+            </div>
+            <a href="{{ url_for('orders.detail', order_id=order.id) }}" class="btn btn-teal btn-sm">
+              Manage Order &rarr;
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="card" style="padding: 50px 20px; text-align: center; border: 1px dashed var(--border-color);">
+        <p style="color: var(--text-muted); margin-bottom: 14px;">No student orders received yet.</p>
+        <a href="{{ url_for('listings.create') }}" class="btn btn-teal">List an Item for Sale</a>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

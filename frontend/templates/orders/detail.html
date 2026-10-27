@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Order #{{ order.order_number }} &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted);">
+    <a href="{{ url_for('orders.index') }}" style="color: inherit; text-decoration: none;">&larr; Back to My Orders</a>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <span style="font-size: 0.82rem; color: var(--text-muted); font-family: monospace;">ORDER #{{ order.order_number }}</span>
+      <h1 style="font-size: 1.85rem; color: var(--primary-navy); margin-top: 2px;">{{ order.listing.title }}</h1>
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        Placed on {{ order.created_at.strftime('%d %B %Y, %I:%M %p') }}
+      </div>
+    </div>
+
+    <div>
+      {% if order.status == 'PENDING' %}
+        <span class="badge badge-reserved" style="font-size: 0.85rem; padding: 6px 12px;">Pending Acceptance</span>
+      {% elif order.status == 'ACCEPTED' %}
+        <span class="badge badge-available" style="font-size: 0.85rem; padding: 6px 12px;">Accepted &bull; Ready for Handoff</span>
+      {% elif order.status == 'COMPLETED' %}
+        <span class="badge badge-available" style="font-size: 0.85rem; padding: 6px 12px; background-color: #f4efe6; color: #1e293b; border: 1px solid #dcd4c5;">Completed &amp; Escrow Released</span>
+      {% elif order.status == 'DISPUTED' %}
+        <span class="badge" style="font-size: 0.85rem; padding: 6px 12px; background-color: #fef2f2; color: #b91c1c;">Disputed</span>
+      {% else %}
+        <span class="badge badge-sold" style="font-size: 0.85rem; padding: 6px 12px;">Cancelled</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Order Lifecycle Timeline -->
+  <div class="card" style="padding: 24px; margin-bottom: 24px;">
+    <div class="order-timeline">
+      <!-- Step 1: Placed -->
+      <div class="timeline-step {% if order.status in ['PENDING', 'ACCEPTED', 'COMPLETED'] %}completed{% endif %}">
+        <div class="timeline-node"><i class="bi bi-cart-check"></i></div>
+        <div class="timeline-title">1. Placed</div>
+        <div class="timeline-subtitle">Escrow Held</div>
+      </div>
+
+      <!-- Step 2: Accepted -->
+      <div class="timeline-step {% if order.status in ['ACCEPTED', 'COMPLETED'] %}completed{% elif order.status == 'PENDING' %}active{% endif %}">
+        <div class="timeline-node"><i class="bi bi-person-check"></i></div>
+        <div class="timeline-title">2. Accepted</div>
+        <div class="timeline-subtitle">Meeting Set</div>
+      </div>
+
+      <!-- Step 3: Completed -->
+      <div class="timeline-step {% if order.status == 'COMPLETED' %}completed{% elif order.status == 'ACCEPTED' %}active{% elif order.status in ['CANCELLED', 'DISPUTED'] %}cancelled{% endif %}">
+        <div class="timeline-node">
+          {% if order.status == 'CANCELLED' %}
+            <i class="bi bi-x-lg"></i>
+          {% elif order.status == 'DISPUTED' %}
+            <i class="bi bi-exclamation-lg"></i>
+          {% else %}
+            <i class="bi bi-check2"></i>
+          {% endif %}
+        </div>
+        <div class="timeline-title">
+          {% if order.status == 'CANCELLED' %}Cancelled{% elif order.status == 'DISPUTED' %}Disputed{% else %}3. Completed{% endif %}
+        </div>
+        <div class="timeline-subtitle">
+          {% if order.status == 'CANCELLED' %}Refunded{% elif order.status == 'DISPUTED' %}Under Review{% else %}Handoff Done{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Dispute / Cancellation Banner -->
+    {% if order.status == 'DISPUTED' %}
+      <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 16px; margin-top: 16px; font-size: 0.9rem; color: #991b1b;">
+        <strong><i class="bi bi-shield-exclamation"></i> Dispute Filed:</strong> {{ order.dispute_reason }}
+        {% if order.dispute_resolution %}
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #f87171; color: #065f46;">
+            <strong>Resolution Note:</strong> {{ order.dispute_resolution }}
+          </div>
+        {% else %}
+          <div style="font-size: 0.8rem; color: #b91c1c; margin-top: 4px;">Campus administrators are reviewing this order history and will arbitrate.</div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Order Details & Counterpart -->
+  <div class="card" style="padding: 24px; margin-bottom: 24px;">
+    <h3 style="font-size: 1.2rem; color: var(--primary-navy); margin-bottom: 16px;">Campus Exchange Details</h3>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Item &amp; Seller</div>
+        <div style="display: flex; gap: 12px; margin-top: 8px; align-items: center;">
+          <img src="{{ url_for('static', filename=order.listing.primary_image_url) }}" alt="" style="width: 54px; height: 54px; border-radius: var(--radius-sm); object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/misc.svg') }}';">
+          <div>
+            <a href="{{ url_for('listings.detail', listing_id=order.listing.id) }}" style="font-weight: 600; color: var(--primary-navy); text-decoration: none;">
+              {{ order.listing.title }}
+            </a>
+            <div style="font-size: 0.82rem; color: var(--text-muted);">
+              Seller: <strong>{{ order.seller.display_name }}</strong> ({{ order.seller.display_college }})
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Campus Meeting Spot</div>
+        <div style="margin-top: 8px; font-weight: 600; color: var(--primary-navy);">
+          <i class="bi bi-geo-alt-fill" style="color: var(--accent-teal);"></i> {{ order.pickup_location }}
+        </div>
+        {% if order.notes %}
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; font-style: italic;">
+            "{{ order.notes }}"
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment & Escrow Record Card -->
+  <div class="card" style="padding: 24px; margin-bottom: 24px;">
+    <h3 style="font-size: 1.2rem; color: var(--primary-navy); margin-bottom: 16px;">Financial &amp; Escrow Verification</h3>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; font-size: 0.88rem;">
+      <div>
+        <span style="color: var(--text-muted); display: block;">Total Amount:</span>
+        <strong style="font-size: 1.3rem; color: var(--primary-navy);">{{ order.amount | currency_inr }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block;">Escrow Holding Status:</span>
+        <strong style="color: var(--accent-teal-dark);">{{ order.payment_status }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block;">Gateway Channel:</span>
+        <strong>{{ order.payment_method }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted); display: block;">Buyer Profile:</span>
+        <strong>{{ order.buyer.display_name }}</strong>
+      </div>
+    </div>
+
+    {% if order.payment_record %}
+      <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; margin-top: 16px; font-size: 0.8rem; color: var(--text-muted); font-family: monospace;">
+        <div>Transaction Ref: {{ order.payment_record.gateway_payment_id or order.payment_record.gateway_order_id }}</div>
+        <div>Verification: {{ order.payment_record.verification_notes }}</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Role Actions -->
+  <div class="card" style="padding: 24px; background-color: #f8fafc;">
+    <h3 style="font-size: 1.15rem; color: var(--primary-navy); margin-bottom: 14px;">Available Actions</h3>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <!-- Seller Accept Action -->
+      {% if is_seller and order.status == 'PENDING' %}
+        <form action="{{ url_for('orders.update_status', order_id=order.id) }}" method="POST" style="display: inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="ACCEPTED">
+          <button type="submit" class="btn btn-teal">
+            <i class="bi bi-check-circle-fill"></i> Accept Order &amp; Coordinate Handoff
+          </button>
+        </form>
+      {% endif %}
+
+      <!-- Buyer Complete Action -->
+      {% if is_buyer and order.status in ['PENDING', 'ACCEPTED'] %}
+        <form action="{{ url_for('orders.update_status', order_id=order.id) }}" method="POST" style="display: inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="COMPLETED">
+          <button type="submit" class="btn btn-teal" data-confirm="Confirm that you have physically inspected this item on campus and received it in acceptable condition? This will release escrow to the seller.">
+            <i class="bi bi-check2-circle"></i> Confirm Handoff &amp; Release Escrow
+          </button>
+        </form>
+      {% endif %}
+
+      <!-- Cancel Action -->
+      {% if (is_buyer or is_seller) and order.status in ['PENDING', 'ACCEPTED'] %}
+        <form action="{{ url_for('orders.update_status', order_id=order.id) }}" method="POST" style="display: inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="CANCELLED">
+          <button type="submit" class="btn btn-outline" data-confirm="Are you sure you want to cancel this order? Item will be returned to Available.">
+            Cancel Order
+          </button>
+        </form>
+      {% endif %}
+
+      <!-- Direct Message CTA -->
+      <a href="{{ url_for('messages.start_chat', listing_id=order.listing_id) }}" class="btn btn-primary">
+        <i class="bi bi-chat-dots-fill"></i> Open Chat Thread
+      </a>
+
+      <!-- Raise Dispute CTA -->
+      {% if (is_buyer or is_seller) and order.status in ['PENDING', 'ACCEPTED', 'COMPLETED'] %}
+        <button type="button" class="btn btn-outline" style="color: var(--status-danger); border-color: #fca5a5;" data-modal-target="disputeModal">
+          <i class="bi bi-exclamation-triangle-fill"></i> Raise Dispute
+        </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Dispute Modal -->
+<div class="modal-backdrop" id="disputeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="bi bi-exclamation-triangle-fill" style="color: var(--status-danger);"></i> Raise Order Dispute</h3>
+      <button type="button" class="modal-close-btn">&times;</button>
+    </div>
+
+    <form action="{{ url_for('orders.raise_dispute', order_id=order.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="dispute_reason">Dispute Reason &amp; Evidence *</label>
+        <textarea id="dispute_reason" name="dispute_reason" rows="4" class="form-control" placeholder="Explain what occurred (e.g. Item condition significantly different from listing photos, non-functional electronics, or peer failed to show up at campus spot)..." required></textarea>
+        <div class="form-hint">Our administration team will review chat records and arbitrate escrow release or refund.</div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" class="btn btn-outline modal-close-btn">Cancel</button>
+        <button type="submit" class="btn btn-danger">Submit Dispute for Review</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

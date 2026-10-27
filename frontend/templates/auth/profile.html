@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}My Student Profile &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 40px; padding-bottom: 40px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 4px;">Student Profile</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your college details, active location, avatar, and security settings</p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="{{ url_for('urgent.my_urgent') }}" class="btn btn-outline-warning btn-sm" style="border-color: #f59e0b; color: #b45309;">
+        <i class="bi bi-lightning-charge-fill"></i> My Urgent Needs
+      </a>
+      <a href="{{ url_for('listings.my_listings') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-tags"></i> My Listings
+      </a>
+      <a href="{{ url_for('orders.index') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-bag"></i> My Orders
+      </a>
+    </div>
+  </div>
+
+  <!-- Profile Card Banner -->
+  <div class="card" style="padding: 24px; margin-bottom: 28px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+    <div style="position: relative;">
+      {% if user.profile_photo %}
+        <img src="{{ url_for('static', filename=user.profile_photo) }}" alt="Avatar" style="width: 72px; height: 72px; border-radius: var(--radius-full); object-fit: cover; border: 2px solid var(--border-color);">
+      {% else %}
+        <div class="avatar-initials" style="width: 72px; height: 72px; font-size: 1.6rem;">
+          {{ user.initials }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="flex-grow: 1;">
+      <h2 style="font-size: 1.4rem; color: var(--primary-navy); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        {{ user.display_name }}
+        
+        <!-- Distinct Verification Indicators -->
+        {% if user.is_verified_student %}
+          <span class="badge badge-verified-student" title="Student identity confirmed by college administrators">
+            <i class="bi bi-patch-check-fill"></i> Verified Student
+          </span>
+        {% else %}
+          <span class="badge" style="background-color: #f1f5f9; color: #64748b; font-size: 0.72rem;">
+            Unverified ID
+          </span>
+        {% endif %}
+
+        {% if user.is_email_verified %}
+          <span class="badge badge-outline" style="border-color: var(--accent-terracotta); color: var(--accent-terracotta); font-size: 0.72rem;">
+            <i class="bi bi-envelope-check"></i> Campus Email
+          </span>
+        {% endif %}
+
+        {% if user.is_google_authenticated %}
+          <span class="badge badge-outline" style="border-color: #4285F4; color: #1e3a8a; font-size: 0.72rem;">
+            <i class="bi bi-google"></i> Google OAuth
+          </span>
+        {% endif %}
+      </h2>
+
+      <div style="color: var(--text-muted); font-size: 0.9rem;">
+        <i class="bi bi-buildings"></i> {{ user.college_name }}
+        {% if user.course_year %} &bull; {{ user.course_year }}{% endif %}
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 4px;">
+        <i class="bi bi-geo-alt"></i> Default Hub: <strong>{{ user.preferred_city or 'Ahmedabad' }}, {{ user.preferred_state or 'Gujarat' }}</strong>
+        &bull; Joined {{ user.created_at.strftime('%B %Y') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Details Form -->
+  <div class="card" style="padding: 28px; margin-bottom: 28px;">
+    <h3 style="font-size: 1.25rem; color: var(--primary-navy); margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+      <i class="bi bi-pencil-square"></i> Update Personal &amp; Campus Details
+    </h3>
+
+    <form action="{{ url_for('auth.profile') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="update_details">
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="display_name">Display Name *</label>
+          <input type="text" id="display_name" name="display_name" class="form-control" value="{{ user.display_name }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="college_name_input">College Campus</label>
+          <input 
+            type="text" 
+            id="college_name_input" 
+            name="college_name_input" 
+            class="form-control" 
+            value="{{ user.college_name }}"
+            list="profileCollegesList"
+            placeholder="Type your college or choose from suggestions..."
+            autocomplete="off"
+          >
+          <datalist id="profileCollegesList">
+            {% for c in colleges %}
+              <option value="{{ c.name }}">{{ c.city }} &bull; {{ c.short_name }}</option>
+            {% endfor %}
+          </datalist>
+          <input type="hidden" name="college_id" value="{{ user.college_id or '' }}">
+          <div class="form-hint">Type or select your institution. Custom colleges are saved.</div>
+        </div>
+      </div>
+
+      <!-- Preferred Location: State & City -->
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="preferred_state">Preferred State *</label>
+          <select id="preferred_state" name="preferred_state" class="form-control" required>
+            {% for st in all_states %}
+              <option value="{{ st }}" {% if (user.preferred_state or 'Gujarat') == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="preferred_city">Preferred Campus City / Hub *</label>
+          <input 
+            type="text" 
+            id="preferred_city" 
+            name="preferred_city" 
+            class="form-control" 
+            value="{{ user.preferred_city or 'Ahmedabad' }}" 
+            required 
+            list="profileCitiesList"
+          >
+          <datalist id="profileCitiesList">
+            {% for gcity in gujarat_cities %}
+              <option value="{{ gcity }}"></option>
+            {% endfor %}
+          </datalist>
+          <div class="form-hint">Used to prioritize nearby campus items and urgent needs on your homepage.</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="course_year">Course &amp; Academic Year</label>
+          <input type="text" id="course_year" name="course_year" class="form-control" value="{{ user.course_year or '' }}" placeholder="e.g. B.Tech Computer Engineering - 3rd Year">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="student_id_roll">Roll No. / Student ID</label>
+          <input type="text" id="student_id_roll" name="student_id_roll" class="form-control" value="{{ user.student_id_roll or '' }}" placeholder="e.g. 112103045">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number (Private)</label>
+          <input type="tel" id="phone" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="+91 98765 43210">
+          <div class="form-hint">Stored securely for order contact; never displayed publicly on item cards.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="profile_photo">Change Profile Photo</label>
+          <input type="file" id="profile_photo" name="profile_photo" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp">
+          <div class="form-hint">JPG, PNG, or WEBP (Max 5MB).</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="bio">Student Bio</label>
+        <textarea id="bio" name="bio" rows="3" class="form-control" placeholder="Introduce yourself to campus buyers (e.g. 3rd year CSE student living in Hostel 4, open to handoffs near Central Library)...">{{ user.bio or '' }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-teal">
+        <i class="bi bi-check2"></i> Save Profile Details
+      </button>
+    </form>
+  </div>
+
+  <!-- Change Password Form -->
+  <div class="card" style="padding: 28px;">
+    <h3 style="font-size: 1.25rem; color: var(--primary-navy); margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+      <i class="bi bi-key-fill"></i> Change Account Password
+    </h3>
+
+    <form action="{{ url_for('auth.profile') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="change_password">
+
+      <div class="form-group">
+        <label class="form-label" for="current_password">Current Password *</label>
+        <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Enter current password" required>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="new_password">New Password *</label>
+          <input type="password" id="new_password" name="new_password" class="form-control" placeholder="At least 6 characters" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm New Password *</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-type new password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-outline">
+        <i class="bi bi-shield-lock"></i> Update Password
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

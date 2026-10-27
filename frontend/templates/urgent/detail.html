@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}{{ urgent_req.title }} - Urgent Need - Student Mart{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 900px;">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav mb-3">
+    <a href="{{ url_for('main.index') }}">Home</a> &rarr;
+    <a href="{{ url_for('urgent.feed') }}">Urgent Needs</a> &rarr;
+    <span>Request #{{ urgent_req.id }}</span>
+  </nav>
+
+  <!-- Status / Urgency Top Bar -->
+  <div class="urgent-detail-topbar mb-3">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="urgency-tag urgency-{{ urgent_req.urgency | lower | replace(' ', '-') }}">
+        <i class="bi bi-alarm-fill"></i> {{ urgent_req.urgency }}
+      </span>
+
+      {% if urgent_req.effective_status == 'Active' %}
+        <span class="badge badge-available">
+          <i class="bi bi-check-circle-fill"></i> Active Request
+        </span>
+      {% elif urgent_req.effective_status == 'Fulfilled' %}
+        <span class="badge badge-available" style="background-color: #f4efe6; color: #1e293b; border: 1px solid #dcd4c5;">
+          <i class="bi bi-check-all"></i> Fulfilled
+        </span>
+      {% elif urgent_req.effective_status == 'Expired' %}
+        <span class="badge badge-secondary" style="background-color: #64748b; color: white;">
+          <i class="bi bi-hourglass-bottom"></i> Expired
+        </span>
+      {% else %}
+        <span class="badge badge-secondary">{{ urgent_req.status }}</span>
+      {% endif %}
+
+      <span class="urgent-countdown-pill">
+        <i class="bi bi-clock"></i> {{ urgent_req.time_remaining_str }}
+      </span>
+    </div>
+
+    <!-- Owner Controls -->
+    {% if is_owner %}
+      <div class="d-flex gap-2 flex-wrap">
+        {% if urgent_req.status == 'Active' %}
+          <form action="{{ url_for('urgent.update_status', request_id=urgent_req.id) }}" method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="Fulfilled">
+            <button type="submit" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-check-circle"></i> Mark Fulfilled
+            </button>
+          </form>
+          <form action="{{ url_for('urgent.update_status', request_id=urgent_req.id) }}" method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="Cancelled">
+            <button type="submit" class="btn btn-sm btn-outline" onclick="return confirm('Cancel this urgent request?');">
+              <i class="bi bi-x-circle"></i> Cancel Request
+            </button>
+          </form>
+        {% elif urgent_req.status in ['Fulfilled', 'Cancelled'] %}
+          <form action="{{ url_for('urgent.update_status', request_id=urgent_req.id) }}" method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="Active">
+            <button type="submit" class="btn btn-sm btn-outline-teal">
+              <i class="bi bi-arrow-repeat"></i> Re-open Request
+            </button>
+          </form>
+        {% endif %}
+
+        <form action="{{ url_for('urgent.delete', request_id=urgent_req.id) }}" method="POST" style="display: inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this urgent request permanently?');">
+            <i class="bi bi-trash"></i> Delete
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Request Content -->
+    <div class="col-lg-8">
+      <div class="card p-4 mb-4">
+        <h1 class="h3 fw-bold mb-3" style="color: var(--primary-navy);">
+          {{ urgent_req.title }}
+        </h1>
+
+        <div class="urgent-chips-bar mb-3">
+          <span class="meta-pill"><i class="bi bi-folder2-open"></i> {{ urgent_req.category }}</span>
+          <span class="meta-pill"><i class="bi bi-layers"></i> Qty: {{ urgent_req.quantity }}</span>
+          <span class="meta-pill"><i class="bi bi-geo-alt-fill text-teal"></i> {{ urgent_req.city }}, {{ urgent_req.state }}</span>
+          <span class="meta-pill"><i class="bi bi-mortarboard"></i> {{ urgent_req.display_college }}</span>
+        </div>
+
+        <div class="urgent-desc-block mb-4">
+          <h5 class="fw-semibold mb-2">Request Details</h5>
+          <p style="white-space: pre-line; line-height: 1.6; color: var(--text-dark);">{{ urgent_req.description }}</p>
+        </div>
+
+        <!-- Optional Reference Photo -->
+        {% if urgent_req.image_path %}
+          <div class="urgent-photo-block mb-4">
+            <h6 class="fw-semibold text-muted mb-2">Reference Photo</h6>
+            <img src="{{ url_for('static', filename=urgent_req.image_path) }}" alt="Reference" class="img-fluid rounded" style="max-height: 320px; object-fit: contain; border: 1px solid var(--border-color);" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/misc.svg') }}';">
+          </div>
+        {% endif %}
+
+        <!-- Meeting & Budget Card -->
+        <div class="urgent-logistics-box">
+          <div class="logistic-row">
+            <div class="logistic-icon"><i class="bi bi-pin-map-fill text-teal"></i></div>
+            <div>
+              <strong>Preferred Campus Pickup Spot:</strong>
+              <div class="text-dark">{{ urgent_req.preferred_pickup }}</div>
+            </div>
+          </div>
+
+          <div class="logistic-row">
+            <div class="logistic-icon"><i class="bi bi-cash-stack text-success"></i></div>
+            <div>
+              <strong>Offered Budget:</strong>
+              <div class="text-dark">
+                {% if urgent_req.budget and urgent_req.budget > 0 %}
+                  <span class="price-current">{{ urgent_req.budget | currency_inr }}</span>
+                {% else %}
+                  <span class="text-success fw-semibold">Seeking Free Help or Friendly Peer Lending</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="logistic-row">
+            <div class="logistic-icon"><i class="bi bi-hourglass-split text-warning"></i></div>
+            <div>
+              <strong>Expires At:</strong>
+              <div class="text-muted" style="font-size: 0.9rem;">
+                {{ urgent_req.expires_at.strftime('%b %d, %Y at %I:%M %p UTC') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFERS SECTION -->
+      {% if is_owner %}
+        <!-- Owner view of all received help offers -->
+        <div class="card p-4">
+          <h3 class="h5 fw-bold mb-3 d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-chat-heart text-danger"></i> Student Offers ({{ urgent_req.offers|length }})</span>
+            <span class="badge badge-teal">{{ urgent_req.status }}</span>
+          </h3>
+
+          {% if urgent_req.offers %}
+            <div class="offers-list">
+              {% for offer in urgent_req.offers %}
+                <div class="offer-card {% if offer.status == 'Accepted' %}offer-card-accepted{% endif %} mb-3 p-3">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <strong>{{ offer.responder.display_name }}</strong>
+                      <span class="text-muted ms-1" style="font-size: 0.85rem;">({{ offer.responder.college_name }})</span>
+                      {% if offer.status == 'Accepted' %}
+                        <span class="badge badge-success ms-2"><i class="bi bi-check-circle-fill"></i> Accepted Offer</span>
+                      {% endif %}
+                    </div>
+                    <span class="text-muted" style="font-size: 0.8rem;">{{ offer.created_at | time_ago }}</span>
+                  </div>
+
+                  <p class="mb-2" style="font-size: 0.95rem; color: var(--text-dark);">{{ offer.message }}</p>
+
+                  <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="font-size: 0.88rem;">
+                    <div>
+                      {% if offer.is_free_help or offer.price_offered == 0 %}
+                        <span class="text-success fw-bold"><i class="bi bi-gift-fill"></i> Offering Free Help</span>
+                      {% else %}
+                        <span class="fw-bold">Asking Price: ₹{{ offer.price_offered }}</span>
+                      {% endif %}
+                      {% if offer.pickup_suggestion %}
+                        <span class="text-muted ms-2">&bull; Suggested Spot: {{ offer.pickup_suggestion }}</span>
+                      {% endif %}
+                    </div>
+
+                    {% if offer.status == 'Pending' and urgent_req.status == 'Active' %}
+                      <form action="{{ url_for('urgent.accept_offer', request_id=urgent_req.id, offer_id=offer.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-teal">
+                          <i class="bi bi-check2"></i> Accept Offer
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+              <p class="mt-2 mb-0">No student offers received yet. Fellow campus students will see this in the feed.</p>
+            </div>
+          {% endif %}
+        </div>
+
+      {% else %}
+        <!-- Non-owner student view -->
+        {% if user_existing_offer %}
+          <div class="card p-4 alert alert-info mb-4">
+            <h5 class="fw-semibold mb-2"><i class="bi bi-check-circle-fill text-success"></i> You Offered to Help This Student</h5>
+            <p class="mb-2"><strong>Your message:</strong> "{{ user_existing_offer.message }}"</p>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="font-size: 0.88rem;">
+              <span>Offer Status: <strong>{{ user_existing_offer.status }}</strong></span>
+              <span>Offered: {% if user_existing_offer.is_free_help %}Free Help{% else %}₹{{ user_existing_offer.price_offered }}{% endif %}</span>
+            </div>
+          </div>
+        {% elif urgent_req.effective_status == 'Active' %}
+          {% if current_user %}
+            <!-- Offer Help Form -->
+            <div class="card p-4">
+              <h4 class="h5 fw-bold mb-2" style="color: var(--primary-navy);">
+                <i class="bi bi-hand-thumbs-up-fill text-teal"></i> Can You Help This Student?
+              </h4>
+              <p class="text-muted mb-3" style="font-size: 0.9rem;">
+                Submit an offer with your availability, pickup spot, and price (or free lending).
+              </p>
+
+              <form action="{{ url_for('urgent.submit_offer', request_id=urgent_req.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                  <label for="message" class="form-label fw-semibold">Your Response / Availability <span class="text-danger">*</span></label>
+                  <textarea 
+                    id="message" 
+                    name="message" 
+                    rows="3" 
+                    class="form-control" 
+                    placeholder="e.g. I have a Casio fx-991EX calculator in Hostel Block B. I can bring it to the Library reading hall in 15 minutes." 
+                    required 
+                    minlength="5"
+                  ></textarea>
+                </div>
+
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6">
+                    <label for="price_offered" class="form-label fw-semibold">Price (₹) if applicable</label>
+                    <div class="input-group">
+                      <span class="input-group-text">₹</span>
+                      <input type="number" id="price_offered" name="price_offered" class="form-control" placeholder="0 if free" min="0">
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="pickup_suggestion" class="form-label fw-semibold">Your Meetup Suggestion</label>
+                    <input type="text" id="pickup_suggestion" name="pickup_suggestion" class="form-control" placeholder="Default: {{ urgent_req.preferred_pickup }}">
+                  </div>
+                </div>
+
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="checkbox" name="is_free_help" value="1" id="freeHelpCheck">
+                  <label class="form-check-label" for="freeHelpCheck">
+                    <strong>I am offering this as free help or friendly lending</strong> (no charge)
+                  </label>
+                </div>
+
+                <button type="submit" class="btn btn-teal w-100 py-2">
+                  <i class="bi bi-send-fill"></i> Submit Offer to Student
+                </button>
+              </form>
+            </div>
+          {% else %}
+            <div class="card p-4 text-center">
+              <h5>Want to help this campus mate?</h5>
+              <p class="text-muted">Log in or register with your college email to respond to this urgent request.</p>
+              <div class="d-flex justify-content-center gap-2 mt-2">
+                <a href="{{ url_for('auth.login', next=request.path) }}" class="btn btn-primary">Log In to Offer Help</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline">Student Sign Up</a>
+              </div>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-secondary text-center py-4">
+            <h5>This urgent request is {{ urgent_req.effective_status | lower }}.</h5>
+            <p class="mb-0">Offers can no longer be submitted for this request.</p>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- Sidebar: Student Profile & Safety -->
+    <div class="col-lg-4">
+      <!-- Requester Profile Card -->
+      <div class="card p-4 mb-4">
+        <h5 class="fw-bold mb-3" style="color: var(--primary-navy);">Requester Student</h5>
+        
+        <div class="d-flex align-items-center gap-3 mb-3">
+          {% if urgent_req.user.profile_photo %}
+            <img src="{{ url_for('static', filename=urgent_req.user.profile_photo) }}" alt="Avatar" class="avatar-photo" style="width: 52px; height: 52px;">
+          {% else %}
+            <div class="avatar-initials" style="width: 52px; height: 52px; font-size: 1.2rem;">{{ urgent_req.user.initials }}</div>
+          {% endif %}
+          <div>
+            <h6 class="mb-0 fw-bold">{{ urgent_req.user.display_name }}</h6>
+            <span class="text-muted" style="font-size: 0.85rem;">{{ urgent_req.user.course_year or 'Student' }}</span>
+          </div>
+        </div>
+
+        <div class="student-trust-badges mb-3">
+          {% if urgent_req.user.is_verified_student %}
+            <span class="badge badge-verified mb-1 d-block"><i class="bi bi-patch-check-fill"></i> Verified Student</span>
+          {% endif %}
+          {% if urgent_req.user.is_email_verified %}
+            <span class="badge badge-outline mb-1 d-block"><i class="bi bi-envelope-check"></i> College Email Confirmed</span>
+          {% endif %}
+          <span class="badge badge-outline d-block"><i class="bi bi-mortarboard"></i> {{ urgent_req.display_college }}</span>
+        </div>
+
+        <div class="privacy-note p-2 rounded bg-light" style="font-size: 0.82rem; color: #64748b;">
+          <i class="bi bi-lock-fill"></i> Phone and email are kept private. Coordinates are arranged via in-app offers and daylight handoffs.
+        </div>
+      </div>
+
+      <!-- Trust & Safety Quick Tips -->
+      <div class="card p-4">
+        <h6 class="fw-bold mb-2"><i class="bi bi-shield-check text-teal"></i> Urgent Exchange Safety</h6>
+        <ul class="safety-tip-list" style="font-size: 0.85rem; padding-left: 18px; color: var(--text-muted); line-height: 1.5;">
+          <li>Always meet at public spots (library entrance, main gate, or student mess).</li>
+          <li>If borrowing for exam/practical, inspect calculator screen, batteries, and keys.</li>
+          <li>For security deposits, agree on exact return hour before completing the handoff.</li>
+        </ul>
+
+        <!-- Report Button -->
+        {% if current_user and not is_owner %}
+          <button type="button" class="btn btn-link text-danger btn-sm p-0 mt-2 text-decoration-none" onclick="document.getElementById('reportModal').style.display='block';">
+            <i class="bi bi-flag"></i> Report Inappropriate Request
+          </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report Modal -->
+{% if current_user and not is_owner %}
+<div class="modal" id="reportModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; padding: 20px;">
+  <div class="modal-dialog" style="max-width: 500px; margin: 40px auto; background: white; border-radius: 8px; padding: 24px;">
+    <h5 class="fw-bold mb-3">Report Urgent Request</h5>
+    <form action="{{ url_for('urgent.report', request_id=urgent_req.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Reason</label>
+        <select name="reason" class="form-select" required>
+          <option value="Prohibited or Exam Cheating Item">Prohibited or Exam Cheating Item</option>
+          <option value="Spam or Unrealistic Budget">Spam or Unrealistic Budget</option>
+          <option value="Abusive Language or Harassment">Abusive Language or Harassment</option>
+          <option value="Suspicious Non-Student Activity">Suspicious Non-Student Activity</option>
+          <option value="Other Policy Violation">Other Policy Violation</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Details</label>
+        <textarea name="details" rows="3" class="form-control" placeholder="Please describe why this should be reviewed by moderators." required></textarea>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('reportModal').style.display='none';">Cancel</button>
+        <button type="submit" class="btn btn-danger">Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

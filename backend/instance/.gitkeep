@@ -1,0 +1,3 @@
+# This file keeps the instance/ folder tracked by Git.
+# The actual SQLite database (*.db) is gitignored and auto-created on first run.
+

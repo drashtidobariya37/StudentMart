@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Safety Centre &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 40px;">
+  <div style="text-align: center; margin-bottom: 36px;">
+    <span class="badge badge-available" style="font-size: 0.85rem; padding: 4px 12px; margin-bottom: 10px; display: inline-block;">
+      <i class="bi bi-shield-lock-fill"></i> Campus Trust &amp; Safety Protocol
+    </span>
+    <h1 style="font-size: 2.2rem; color: var(--primary-navy); margin-bottom: 8px;">Student Safety Centre</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Essential protocols and policies to keep campus peer-to-peer commerce safe, transparent, and pleasant for every student.
+    </p>
+  </div>
+
+  <!-- Guideline 1: Daylight Campus Handoffs -->
+  <div class="card" style="padding: 28px; margin-bottom: 24px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+      <i class="bi bi-sun-fill" style="color: #f59e0b;"></i> 1. The Daylight Campus Handoff Protocol
+    </h2>
+    <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+      Because Student Mart is designed for college communities, you should never meet a stranger in secluded off-campus alleys or private rooms. Always schedule exchanges during daylight hours in high-traffic campus locations:
+    </p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px;">
+      <div style="background-color: var(--bg-slate); padding: 12px; border-radius: var(--radius-md); border-left: 3px solid var(--accent-teal);">
+        <strong style="color: var(--primary-navy); display: block; font-size: 0.9rem;">Central Library Steps</strong>
+        <span style="color: var(--text-muted); font-size: 0.78rem;">Public, monitored, safe daylight area</span>
+      </div>
+      <div style="background-color: var(--bg-slate); padding: 12px; border-radius: var(--radius-md); border-left: 3px solid var(--accent-teal);">
+        <strong style="color: var(--primary-navy); display: block; font-size: 0.9rem;">Main Student Canteen</strong>
+        <span style="color: var(--text-muted); font-size: 0.78rem;">Busy social hub during daytime</span>
+      </div>
+      <div style="background-color: var(--bg-slate); padding: 12px; border-radius: var(--radius-md); border-left: 3px solid var(--accent-teal);">
+        <strong style="color: var(--primary-navy); display: block; font-size: 0.9rem;">Student Activity Center</strong>
+        <span style="color: var(--text-muted); font-size: 0.78rem;">Well-lit campus recreation area</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guideline 2: Prohibited Items Policy -->
+  <div class="card" id="prohibited" style="padding: 28px; margin-bottom: 24px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+      <i class="bi bi-slash-circle-fill" style="color: var(--status-danger);"></i> 2. Prohibited Items Policy
+    </h2>
+    <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+      Any user attempting to list items from this list will face immediate account suspension and notification to campus administrative authorities:
+    </p>
+    <ul style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.7; padding-left: 20px;">
+      <li><strong>Unauthorized Exam &amp; Cheating Material:</strong> Solved live test papers, answer leaks, proxy attendance devices, or spy cameras.</li>
+      <li><strong>Institutional / Hostel Property:</strong> Library books with college barcodes, lab equipment belonging to departmental labs, or hostel furniture.</li>
+      <li><strong>Hazardous Chemicals or Unregulated Lab Reagents:</strong> Flammable chemicals, lab acids, or restricted biological specimens.</li>
+      <li><strong>Weapons &amp; Dangerous Objects:</strong> Knives, air guns, pepper spray, or illegal fireworks.</li>
+      <li><strong>Substances, Alcohol &amp; Vapes:</strong> Any regulated intoxicants, cigarettes, e-cigarettes, or tobacco products.</li>
+    </ul>
+  </div>
+
+  <!-- Guideline 3: Scam Prevention & Payment Truth -->
+  <div class="card" style="padding: 28px; margin-bottom: 24px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+      <i class="bi bi-shield-exclamation" style="color: #6366f1;"></i> 3. Anti-Fraud &amp; UPI Warning
+    </h2>
+    <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; font-size: 0.9rem; color: #92400e; line-height: 1.6;">
+      <strong>Remember: You NEVER enter your UPI PIN to receive money.</strong> Scammers frequently send a Google Pay or PhonePe payment request claiming they are paying an advance. Entering your UPI PIN deducts money from your bank account!
+    </div>
+    <ul style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.7; padding-left: 20px;">
+      <li>Do not send advance deposits or token payments before verifying the physical item in person.</li>
+      <li>Test electronic devices (calculators, laptops, chargers) before marking an order as Completed.</li>
+      <li>Inspect textbooks to ensure essential chapters and appendices are not torn or missing.</li>
+    </ul>
+  </div>
+
+  <!-- Guideline 4: How to Report -->
+  <div class="card" style="padding: 28px; margin-bottom: 24px;">
+    <h2 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+      <i class="bi bi-flag-fill" style="color: var(--accent-teal);"></i> 4. How to Report Suspicious Activity
+    </h2>
+    <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+      If you see a suspicious listing, inappropriate message, or prohibited item:
+    </p>
+    <ol style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.7; padding-left: 20px;">
+      <li>Click the <strong>Report Listing</strong> button on any product detail page.</li>
+      <li>Or use the <strong>Report User</strong> button inside any active message conversation.</li>
+      <li>Choose the appropriate violation category and provide specific context.</li>
+      <li>Student Mart administrators review reports within 12 hours and can remove listings or suspend accounts.</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Post Urgent Need - Student Mart{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 760px;">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav mb-3">
+    <a href="{{ url_for('main.index') }}">Home</a> &rarr;
+    <a href="{{ url_for('urgent.feed') }}">Urgent Needs</a> &rarr;
+    <span>Post Urgent Request</span>
+  </nav>
+
+  <div class="card p-4 p-md-5">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="urgent-icon-circle">
+        <i class="bi bi-lightning-charge-fill"></i>
+      </div>
+      <div>
+        <h1 class="h3 mb-1" style="color: var(--primary-navy); font-weight: 700;">Post an Urgent Campus Need</h1>
+        <p class="text-muted mb-0" style="font-size: 0.95rem;">
+          Get help from nearby college students before exams, practicals, or assignment submission deadlines.
+        </p>
+      </div>
+    </div>
+
+    <div class="alert alert-info py-2 px-3 mb-4" style="font-size: 0.88rem;">
+      <i class="bi bi-shield-check"></i>
+      <strong>Trust Notice:</strong> Your urgent request will be posted with your student name and college. Your phone and personal email remain private.
+    </div>
+
+    <form action="{{ url_for('urgent.create') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Item Title -->
+      <div class="mb-3">
+        <label for="title" class="form-label fw-semibold">
+          What do you urgently need? <span class="text-danger">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="title" 
+          name="title" 
+          class="form-control" 
+          placeholder="e.g. Need Casio fx-991EX for 11 AM exam, DBMS Notes for practical, or lab coat" 
+          value="{{ form_data.get('title', '') }}" 
+          required 
+          minlength="5" 
+          maxlength="160"
+        >
+        <div class="form-text">Be specific with model, subject, or size to get the quickest response.</div>
+      </div>
+
+      <!-- Urgency Level Selection with Expiry Preview -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold">
+          How urgently do you need this? <span class="text-danger">*</span>
+        </label>
+        <div class="urgency-selector-grid">
+          <label class="urgency-option-card">
+            <input type="radio" name="urgency" value="Within 1 hour" {% if form_data.get('urgency') == 'Within 1 hour' %}checked{% endif %} required>
+            <div class="urgency-option-content urgency-critical">
+              <span class="urgency-icon"><i class="bi bi-alarm-fill"></i></span>
+              <span class="urgency-name">Within 1 Hour</span>
+              <span class="urgency-hint">Expires in 60 mins</span>
+            </div>
+          </label>
+
+          <label class="urgency-option-card">
+            <input type="radio" name="urgency" value="Today" {% if form_data.get('urgency', 'Today') == 'Today' %}checked{% endif %}>
+            <div class="urgency-option-content urgency-today">
+              <span class="urgency-icon"><i class="bi bi-clock-fill"></i></span>
+              <span class="urgency-name">Today</span>
+              <span class="urgency-hint">Expires in 6 hours</span>
+            </div>
+          </label>
+
+          <label class="urgency-option-card">
+            <input type="radio" name="urgency" value="Tomorrow" {% if form_data.get('urgency') == 'Tomorrow' %}checked{% endif %}>
+            <div class="urgency-option-content urgency-tomorrow">
+              <span class="urgency-icon"><i class="bi bi-calendar-check"></i></span>
+              <span class="urgency-name">Tomorrow</span>
+              <span class="urgency-hint">Expires in 24 hours</span>
+            </div>
+          </label>
+
+          <label class="urgency-option-card">
+            <input type="radio" name="urgency" value="Flexible" {% if form_data.get('urgency') == 'Flexible' %}checked{% endif %}>
+            <div class="urgency-option-content urgency-flexible">
+              <span class="urgency-icon"><i class="bi bi-calendar3"></i></span>
+              <span class="urgency-name">Flexible</span>
+              <span class="urgency-hint">Expires in 7 days</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Category & Quantity -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-8">
+          <label for="category" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+          <select id="category" name="category" class="form-select" required>
+            <option value="" disabled selected>Select Item Category</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if form_data.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="quantity" class="form-label fw-semibold">Quantity</label>
+          <input type="number" id="quantity" name="quantity" class="form-control" value="{{ form_data.get('quantity', '1') }}" min="1" max="10">
+        </div>
+      </div>
+
+      <!-- Location: State and City (Prioritizing Gujarat, Ahmedabad & Gandhinagar) -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label for="state" class="form-label fw-semibold">State <span class="text-danger">*</span></label>
+          <select id="state" name="state" class="form-select" required>
+            {% for st in all_states %}
+              <option value="{{ st }}" {% if form_data.get('state', current_user.preferred_state or 'Gujarat') == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label for="city" class="form-label fw-semibold">City / Hub <span class="text-danger">*</span></label>
+          <input 
+            type="text" 
+            id="city" 
+            name="city" 
+            class="form-control" 
+            placeholder="e.g. Ahmedabad, Gandhinagar, Surat..." 
+            value="{{ form_data.get('city', current_user.preferred_city or 'Ahmedabad') }}" 
+            required
+            list="gujaratCitiesList"
+          >
+          <datalist id="gujaratCitiesList">
+            {% for gcity in gujarat_cities %}
+              <option value="{{ gcity }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+      </div>
+
+      <!-- College Campus -->
+      <div class="mb-3">
+        <label for="college_id" class="form-label fw-semibold">College / University Campus</label>
+        <select id="college_id" name="college_id" class="form-select">
+          <option value="">Select institution (or type below)</option>
+          {% for col in colleges %}
+            <option value="{{ col.id }}" {% if form_data.get('college_id') == col.id|string or current_user.college_id == col.id %}selected{% endif %}>
+              {{ col.name }} ({{ col.city }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Description & Specific Needs -->
+      <div class="mb-3">
+        <label for="description" class="form-label fw-semibold">Description &amp; Specific Details <span class="text-danger">*</span></label>
+        <textarea 
+          id="description" 
+          name="description" 
+          rows="3" 
+          class="form-control" 
+          placeholder="e.g. I have my End-Semester GTU Practical at 11 AM in Block 3. Need Casio 991EX for 2 hours. Will return immediately after in intact condition." 
+          required 
+          minlength="10"
+        >{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <!-- Budget & Preferred Pickup Location -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label for="budget" class="form-label fw-semibold">Budget in INR (₹)</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input 
+              type="number" 
+              id="budget" 
+              name="budget" 
+              class="form-control" 
+              placeholder="Leave blank if seeking free help/borrow" 
+              value="{{ form_data.get('budget', '') }}" 
+              min="0"
+            >
+          </div>
+          <div class="form-text">Enter ₹0 or leave empty if seeking peer goodwill/borrowing.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="preferred_pickup" class="form-label fw-semibold">Preferred Meeting Spot <span class="text-danger">*</span></label>
+          <input 
+            type="text" 
+            id="preferred_pickup" 
+            name="preferred_pickup" 
+            class="form-control" 
+            placeholder="e.g. Central Library porch, Main Canteen, Gate 2" 
+            value="{{ form_data.get('preferred_pickup', '') }}" 
+            required
+          >
+          <div class="form-text">Choose a public daylight campus spot.</div>
+        </div>
+      </div>
+
+      <!-- Optional Reference Photo -->
+      <div class="mb-4">
+        <label for="photo" class="form-label fw-semibold">Optional Reference Photo</label>
+        <input type="file" id="photo" name="photo" class="form-control" accept="image/png, image/jpeg, image/webp">
+        <div class="form-text">E.g., textbook cover, question paper syllabus page, or calculator model. Max 5MB.</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        <a href="{{ url_for('urgent.feed') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-warning btn-lg">
+          <i class="bi bi-lightning-charge-fill"></i> Post Urgent Request Now
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

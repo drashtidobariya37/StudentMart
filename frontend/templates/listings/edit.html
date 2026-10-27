@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Listing &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 6px;">Edit Listing</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Update details or status for: {{ listing.title }}</p>
+  </div>
+
+  <div class="card" style="padding: 30px; box-shadow: var(--shadow-md);">
+    <form action="{{ url_for('listings.edit', listing_id=listing.id) }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Exchange Mode -->
+      <div class="form-group mb-3">
+        <label class="form-label fw-bold">Exchange Mode *</label>
+        <select name="listing_type" class="form-select" onchange="handleEditModeChange(this.value)">
+          <option value="For Sale" {% if (listing.listing_type or 'For Sale') == 'For Sale' %}selected{% endif %}>For Sale</option>
+          <option value="Free" {% if listing.listing_type == 'Free' %}selected{% endif %}>Free Giveaway</option>
+          <option value="Lend/Borrow" {% if listing.listing_type == 'Lend/Borrow' %}selected{% endif %}>Lend / Borrow</option>
+        </select>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label" for="title">Item Title *</label>
+        <input type="text" id="title" name="title" class="form-control" value="{{ listing.title }}" required maxlength="160">
+      </div>
+
+      <div class="grid-3 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="category">Category *</label>
+          <select id="category" name="category" class="form-control" required>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if listing.category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="condition">Item Condition *</label>
+          <select id="condition" name="condition" class="form-control" required>
+            {% for cond in conditions %}
+              <option value="{{ cond }}" {% if listing.condition == cond %}selected{% endif %}>{{ cond }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="status">Listing Status *</label>
+          <select id="status" name="status" class="form-control" required>
+            <option value="Available" {% if listing.status == 'Available' %}selected{% endif %}>Available</option>
+            <option value="Reserved" {% if listing.status == 'Reserved' %}selected{% endif %}>Reserved</option>
+            <option value="Sold" {% if listing.status == 'Sold' %}selected{% endif %}>Sold</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Condition Details / Flaw Notes -->
+      <div class="form-group mb-3">
+        <label class="form-label" for="condition_notes">Condition Details &amp; Flaws (Optional)</label>
+        <textarea id="condition_notes" name="condition_notes" rows="2" class="form-control" placeholder="Describe any scratches, damage, missing parts, handwritten notes, or highlighting...">{{ listing.condition_notes or '' }}</textarea>
+        <div class="form-hint">Mention highlighting, missing accessories, or wear for buyer trust.</div>
+      </div>
+
+      <div id="pricingBlock" class="grid-2 mb-3" {% if listing.listing_type == 'Free' %}style="display: none;"{% endif %}>
+        <div class="form-group">
+          <label class="form-label" for="price" id="priceLabel">Price in INR (₹) *</label>
+          <input type="number" id="price" name="price" class="form-control" value="{{ listing.price }}" min="0">
+        </div>
+
+        <div class="form-group" id="origPriceGroup" {% if listing.listing_type == 'Lend/Borrow' %}style="display: none;"{% endif %}>
+          <label class="form-label" for="original_price">Original MRP in INR (₹)</label>
+          <input type="number" id="original_price" name="original_price" class="form-control" value="{{ listing.original_price or '' }}" min="1">
+        </div>
+      </div>
+
+      <!-- Lending Terms Block -->
+      <div id="lendingBlock" class="p-3 mb-3 rounded bg-light border" {% if listing.listing_type != 'Lend/Borrow' %}style="display: none;"{% endif %}>
+        <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-clock-history"></i> Peer Lending Terms</h5>
+        <div class="grid-2 mb-2">
+          <div class="form-group">
+            <label class="form-label" for="lend_duration">Lending Duration</label>
+            <input type="text" id="lend_duration" name="lend_duration" class="form-control" value="{{ listing.lend_duration or '' }}" placeholder="e.g. 1 week, Exam week">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lend_deposit">Refundable Security Deposit (₹)</label>
+            <input type="number" id="lend_deposit" name="lend_deposit" class="form-control" value="{{ listing.lend_deposit or '' }}" placeholder="e.g. 500" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lend_terms">Return Expectations &amp; Condition</label>
+          <textarea id="lend_terms" name="lend_terms" rows="2" class="form-control">{{ listing.lend_terms or '' }}</textarea>
+        </div>
+      </div>
+
+      <!-- Location: State & City -->
+      <div class="grid-2 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="state">State *</label>
+          <select id="state" name="state" class="form-control" required>
+            {% for st in all_states %}
+              <option value="{{ st }}" {% if (listing.state or 'Gujarat') == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="city">City / Campus Hub *</label>
+          <input type="text" id="city" name="city" class="form-control" value="{{ listing.city or 'Ahmedabad' }}" required list="editCitiesList">
+          <datalist id="editCitiesList">
+            {% for gcity in gujarat_cities %}
+              <option value="{{ gcity }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+      </div>
+
+      <!-- College Campus & Meeting Area -->
+      <div class="grid-2 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="college_name_input">College Campus *</label>
+          <input 
+            type="text" 
+            id="college_name_input" 
+            name="college_name_input" 
+            class="form-control" 
+            value="{{ listing.college_display_name }}" 
+            list="editCollegesList"
+            required
+            autocomplete="off"
+          >
+          <datalist id="editCollegesList">
+            {% for c in colleges %}
+              <option value="{{ c.name }}">{{ c.city }} &bull; {{ c.short_name }}</option>
+            {% endfor %}
+          </datalist>
+          <input type="hidden" name="college_id" value="{{ listing.college_id or '' }}">
+          <div class="form-hint">Type or select your campus. Custom college names are supported.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pickup_area">Designated Campus Meeting Area *</label>
+          <input type="text" id="pickup_area" name="pickup_area" class="form-control" value="{{ listing.pickup_area }}" required>
+          <div class="form-hint">Daylight student spot (Canteen, Library, Main Gate).</div>
+        </div>
+      </div>
+
+      <div class="form-group mb-3">
+        <label class="form-label" for="description">Detailed Description *</label>
+        <textarea id="description" name="description" rows="4" class="form-control" required>{{ listing.description }}</textarea>
+      </div>
+
+      <!-- Current Photos Management -->
+      {% if listing.images %}
+        <div class="form-group mb-4">
+          <label class="form-label fw-bold">Current Photos</label>
+          <div class="form-hint mb-2">Select which photo is the main cover. Check 'Delete' to remove unwanted photos.</div>
+          <div class="image-preview-grid">
+            {% for img in listing.images %}
+              <div class="image-preview-item {% if img.is_primary %}is-cover{% endif %}">
+                <img src="{{ url_for('static', filename=img.image_path) }}" class="image-preview-thumb" alt="Photo {{ loop.index }}">
+                {% if img.is_primary %}
+                  <span class="image-cover-badge">Cover</span>
+                {% endif %}
+                <div class="image-preview-actions">
+                  <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.72rem; margin: 0;">
+                    <input type="radio" name="primary_existing_image_id" value="{{ img.id }}" {% if img.is_primary %}checked{% endif %}>
+                    <span>Cover</span>
+                  </label>
+                  <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: #dc2626; margin: 0;">
+                    <input type="checkbox" name="delete_image_ids" value="{{ img.id }}">
+                    <span>Delete</span>
+                  </label>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="form-group mb-4">
+        <label class="form-label" for="listingImageInput">Upload Additional Photos</label>
+        <input type="file" id="listingImageInput" name="images" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp" multiple>
+        <div class="form-hint">Upload one or more extra real photos (PNG, JPG, or WEBP, max 5MB each).</div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+        <a href="{{ url_for('listings.detail', listing_id=listing.id) }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="bi bi-check-lg"></i> Update Listing
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function handleEditModeChange(mode) {
+  const priceInput = document.getElementById("price");
+  const priceLabel = document.getElementById("priceLabel");
+  const pricingBlock = document.getElementById("pricingBlock");
+  const lendingBlock = document.getElementById("lendingBlock");
+  const origPriceGroup = document.getElementById("origPriceGroup");
+
+  if (mode === "Free") {
+    priceInput.value = "0";
+    pricingBlock.style.display = "none";
+    lendingBlock.style.display = "none";
+  } else if (mode === "Lend/Borrow") {
+    priceLabel.innerText = "Rental / Borrowing Fee in INR (₹)";
+    pricingBlock.style.display = "grid";
+    origPriceGroup.style.display = "none";
+    lendingBlock.style.display = "block";
+  } else {
+    priceLabel.innerText = "Selling Price in INR (₹) *";
+    pricingBlock.style.display = "grid";
+    origPriceGroup.style.display = "block";
+    lendingBlock.style.display = "none";
+  }
+}
+</script>
+{% endblock %}

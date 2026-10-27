@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="badge" style="background-color: #fef3c7; color: #92400e; font-size: 0.8rem; font-weight: 700;">
+          <i class="bi bi-shield-lock-fill"></i> System Administration
+        </span>
+      </div>
+      <h1 style="font-size: 2rem; color: var(--primary-navy); margin-top: 4px;">Platform Moderation &amp; Oversight</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">Monitor student listings, enforce campus safety policies, and arbitrate disputes</p>
+    </div>
+
+    <!-- Admin Nav Links -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="{{ url_for('admin.urgent') }}" class="btn btn-outline btn-sm" style="border-color: #f59e0b; color: #b45309;">
+        <i class="bi bi-lightning-charge-fill"></i> Urgent Moderation ({{ active_urgent }})
+      </a>
+      <a href="{{ url_for('admin.listings') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-tags"></i> Listings Moderation
+      </a>
+      <a href="{{ url_for('admin.reports') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-flag"></i> Reports ({{ pending_reports }})
+      </a>
+      <a href="{{ url_for('admin.orders') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-bag"></i> Orders &amp; Disputes ({{ disputed_orders }})
+      </a>
+      <a href="{{ url_for('admin.users') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-people"></i> Student Accounts
+      </a>
+      <a href="{{ url_for('admin.contacts') }}" class="btn btn-outline btn-sm">
+        <i class="bi bi-envelope"></i> Inquiries
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Stat Cards -->
+  <div class="admin-stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Active Campus Listings</div>
+      <div class="stat-number" style="color: var(--accent-teal);">{{ active_listings }}</div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">{{ total_listings }} Total in Catalog</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Registered Students</div>
+      <div class="stat-number" style="color: var(--primary-navy);">{{ total_users }}</div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Across Multi-College Campuses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending Safety Reports</div>
+      <div class="stat-number" style="color: {% if pending_reports > 0 %}var(--status-danger){% else %}var(--status-available){% endif %};">
+        {{ pending_reports }}
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">Requires Review</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Disputed Orders</div>
+      <div class="stat-number" style="color: {% if disputed_orders > 0 %}#b91c1c{% else %}var(--status-available){% endif %};">
+        {{ disputed_orders }}
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">{{ total_orders }} Total Orders Placed</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Recent Reports Queue -->
+    <div class="card" style="padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; color: var(--primary-navy); display: flex; align-items: center; gap: 8px;">
+          <i class="bi bi-flag-fill" style="color: var(--status-danger);"></i> Recent Safety Reports
+        </h3>
+        <a href="{{ url_for('admin.reports') }}" style="font-size: 0.85rem; color: var(--accent-teal); text-decoration: none;">View All &rarr;</a>
+      </div>
+
+      {% if recent_reports %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          {% for r in recent_reports %}
+            <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                <strong style="font-size: 0.88rem; color: var(--primary-navy);">{{ r.reason }}</strong>
+                <span class="badge {% if r.status == 'PENDING' %}badge-reserved{% else %}badge-available{% endif %}">
+                  {{ r.status }}
+                </span>
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px;">
+                {{ r.details[:80] }}{% if r.details|length > 80 %}...{% endif %}
+              </p>
+              <div style="font-size: 0.75rem; color: var(--text-light);">
+                Reported by {{ r.reporter.display_name }} &bull; {{ r.created_at | time_ago }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem;">No active reports in queue. Campus activity is healthy.</p>
+      {% endif %}
+    </div>
+
+    <!-- Recent Orders & Disputes -->
+    <div class="card" style="padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1.2rem; color: var(--primary-navy); display: flex; align-items: center; gap: 8px;">
+          <i class="bi bi-bag-check-fill" style="color: var(--accent-teal);"></i> Recent Transactions
+        </h3>
+        <a href="{{ url_for('admin.orders') }}" style="font-size: 0.85rem; color: var(--accent-teal); text-decoration: none;">View All &rarr;</a>
+      </div>
+
+      {% if recent_orders %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          {% for ord in recent_orders %}
+            <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-family: monospace; font-size: 0.8rem; color: var(--text-muted);">{{ ord.order_number }}</span>
+                <span class="badge {% if ord.status == 'COMPLETED' %}badge-available{% elif ord.status == 'DISPUTED' %}badge-danger{% else %}badge-reserved{% endif %}">
+                  {{ ord.status }}
+                </span>
+              </div>
+              <div style="font-weight: 600; font-size: 0.9rem; color: var(--primary-navy); margin-bottom: 2px;">
+                {{ ord.listing.title[:35] }}... &bull; {{ ord.amount | currency_inr }}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">
+                Buyer: {{ ord.buyer.display_name }} &bull; Seller: {{ ord.seller.display_name }} &bull; {{ ord.created_at | time_ago }}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color: var(--text-muted); font-size: 0.9rem;">No orders recorded yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

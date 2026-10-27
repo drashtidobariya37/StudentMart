@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Campus Items &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- 1. Page Heading & Results Count -->
+  <div class="browse-header-section mb-4">
+    <div class="d-flex align-items-baseline justify-content-between flex-wrap gap-2">
+      <div>
+        <h1 class="browse-page-title">Browse Campus Items</h1>
+        <p class="browse-page-subtitle">Find books, lab coats, calculators, notes and other useful student items.</p>
+      </div>
+      <div class="browse-results-count-badge">
+        <i class="bi bi-tag-fill"></i>
+        <span>{{ pagination.total }} {% if pagination.total == 1 %}item found{% else %}items found{% endif %}</span>
+        {% if selected_city and selected_city != 'All' %}
+          <span class="count-context">&bull; in {{ selected_city }}</span>
+        {% elif selected_state and selected_state != 'All' %}
+          <span class="count-context">&bull; in {{ selected_state }}</span>
+        {% elif selected_state == 'All' or request.args.get('all_locations') == '1' %}
+          <span class="count-context">&bull; India-Wide</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Search Field & Sort Dropdown Toolbar -->
+  <div class="browse-toolbar-card mb-4">
+    <form action="{{ url_for('listings.browse') }}" method="GET" class="browse-toolbar-form">
+      <!-- Preserve active filters when searching or sorting -->
+      {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+      {% if selected_college_id %}<input type="hidden" name="college_id" value="{{ selected_college_id }}">{% endif %}
+      {% if selected_college_name %}<input type="hidden" name="college_name" value="{{ selected_college_name }}">{% endif %}
+      {% if selected_condition %}<input type="hidden" name="condition" value="{{ selected_condition }}">{% endif %}
+      {% if selected_listing_type %}<input type="hidden" name="listing_type" value="{{ selected_listing_type }}">{% endif %}
+      {% if selected_state %}<input type="hidden" name="state" value="{{ selected_state }}">{% endif %}
+      {% if selected_city %}<input type="hidden" name="city" value="{{ selected_city }}">{% endif %}
+      {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+      {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+      {% if request.args.get('all_locations') %}<input type="hidden" name="all_locations" value="1">{% endif %}
+
+      <div class="toolbar-search-wrap">
+        <i class="bi bi-search search-icon"></i>
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ search_query }}" 
+          placeholder="Search books, drafters, calculators, notes by keyword..." 
+          class="form-control toolbar-search-input"
+          aria-label="Search items"
+        >
+        {% if search_query %}
+          <a href="{{ url_for('listings.browse', category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="search-clear-btn" title="Clear keyword search">
+            <i class="bi bi-x"></i>
+          </a>
+        {% endif %}
+        <button type="submit" class="btn btn-primary toolbar-search-btn">
+          Search
+        </button>
+      </div>
+
+      <div class="toolbar-sort-wrap">
+        <label for="sort" class="sort-control-label">
+          <i class="bi bi-arrow-down-up"></i>
+          <span>Sort By:</span>
+        </label>
+        <select name="sort" id="sort" class="form-select toolbar-sort-select" onchange="this.form.submit()">
+          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- 3. Visually Separated Main Filter Panel (Location & Listing Type) -->
+  <div class="browse-main-filter-panel mb-4">
+    <!-- Location Filter Section -->
+    <div class="filter-panel-section">
+      <div class="filter-section-header">
+        <div class="filter-section-title">
+          <i class="bi bi-geo-alt-fill text-accent"></i>
+          <span>Location</span>
+        </div>
+        <div class="filter-section-help">
+          Select a campus hub or type any city below
+        </div>
+      </div>
+
+      <!-- Location Chips Grid -->
+      <div class="location-chips-grid">
+        <!-- Ahmedabad -->
+        <a href="{{ url_for('listings.browse', city='Ahmedabad', state='Gujarat', category=selected_category, listing_type=selected_listing_type, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by) }}" 
+           class="location-chip {% if selected_city == 'Ahmedabad' %}active{% endif %}"
+           title="Filter items in Ahmedabad">
+          <span class="chip-label">Ahmedabad</span>
+          <span class="chip-count">{{ ahmedabad_count }}</span>
+        </a>
+
+        <!-- Gandhinagar -->
+        <a href="{{ url_for('listings.browse', city='Gandhinagar', state='Gujarat', category=selected_category, listing_type=selected_listing_type, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by) }}" 
+           class="location-chip {% if selected_city == 'Gandhinagar' %}active{% endif %}"
+           title="Filter items in Gandhinagar">
+          <span class="chip-label">Gandhinagar</span>
+          <span class="chip-count">{{ gandhinagar_count }}</span>
+        </a>
+
+        <!-- Surat -->
+        <a href="{{ url_for('listings.browse', city='Surat', state='Gujarat', category=selected_category, listing_type=selected_listing_type, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by) }}" 
+           class="location-chip {% if selected_city == 'Surat' %}active{% endif %}"
+           title="Filter items in Surat">
+          <span class="chip-label">Surat</span>
+          <span class="chip-count">{{ surat_count }}</span>
+        </a>
+
+        <!-- Vadodara -->
+        <a href="{{ url_for('listings.browse', city='Vadodara', state='Gujarat', category=selected_category, listing_type=selected_listing_type, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by) }}" 
+           class="location-chip {% if selected_city == 'Vadodara' %}active{% endif %}"
+           title="Filter items in Vadodara">
+          <span class="chip-label">Vadodara</span>
+          <span class="chip-count">{{ vadodara_count }}</span>
+        </a>
+
+        <!-- All Gujarat -->
+        <a href="{{ url_for('listings.browse', state='Gujarat', city='', category=selected_category, listing_type=selected_listing_type, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by) }}" 
+           class="location-chip {% if selected_state == 'Gujarat' and not selected_city and not request.args.get('all_locations') %}active{% endif %}"
+           title="Filter all items across Gujarat">
+          <span class="chip-label">All Gujarat</span>
+          <span class="chip-count">{{ gujarat_count }}</span>
+        </a>
+
+        <!-- All India -->
+        <a href="{{ url_for('listings.browse', state='All', city='', all_locations='1', category=selected_category, listing_type=selected_listing_type, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by) }}" 
+           class="location-chip {% if selected_state == 'All' or request.args.get('all_locations') == '1' %}active{% endif %}"
+           title="Explore campus items across all Indian states">
+          <span class="chip-label">All India</span>
+          <span class="chip-count">{{ all_india_count }}</span>
+        </a>
+      </div>
+
+      <!-- Manual / Searchable Location Input -->
+      <div class="custom-location-row">
+        <form action="{{ url_for('listings.browse') }}" method="GET" class="custom-location-form">
+          {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+          {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+          {% if selected_listing_type %}<input type="hidden" name="listing_type" value="{{ selected_listing_type }}">{% endif %}
+          {% if selected_condition %}<input type="hidden" name="condition" value="{{ selected_condition }}">{% endif %}
+          {% if selected_college_name %}<input type="hidden" name="college_name" value="{{ selected_college_name }}">{% endif %}
+          {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+          {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+          {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+
+          <div class="custom-location-input-group">
+            <i class="bi bi-geo-alt location-field-icon"></i>
+            <input 
+              type="text" 
+              name="city" 
+              value="{% if selected_city not in ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara'] %}{{ selected_city }}{% endif %}" 
+              placeholder="Search other city (Rajkot, Anand, Bhavnagar...) or custom campus location" 
+              class="form-control custom-location-input"
+              list="browseCityList"
+              autocomplete="off"
+            >
+            <datalist id="browseCityList">
+              {% for gcity in gujarat_cities %}
+                <option value="{{ gcity }}"></option>
+              {% endfor %}
+            </datalist>
+          </div>
+          <button type="submit" class="btn btn-outline btn-sm custom-location-btn">
+            Filter Location
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="filter-panel-divider"></div>
+
+    <!-- Listing Type / Exchange Mode Section -->
+    <div class="filter-panel-section">
+      <div class="filter-section-header">
+        <div class="filter-section-title">
+          <i class="bi bi-tag-fill text-accent"></i>
+          <span>Listing Type</span>
+        </div>
+        <div class="filter-section-help">
+          Filter by exchange arrangement
+        </div>
+      </div>
+
+      <!-- Segmented Control / Selectable Cards -->
+      <div class="listing-type-control">
+        <!-- All Items -->
+        <a href="{{ url_for('listings.browse', listing_type='', city=selected_city, state=selected_state, category=selected_category, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by, all_locations=request.args.get('all_locations')) }}" 
+           class="type-segment {% if not selected_listing_type %}active{% endif %}">
+          <i class="bi bi-grid-fill segment-icon"></i>
+          <div class="segment-text">
+            <span class="segment-title">All Items</span>
+            <span class="segment-desc">All exchange modes</span>
+          </div>
+        </a>
+
+        <!-- For Sale -->
+        <a href="{{ url_for('listings.browse', listing_type='For Sale', city=selected_city, state=selected_state, category=selected_category, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by, all_locations=request.args.get('all_locations')) }}" 
+           class="type-segment {% if selected_listing_type == 'For Sale' %}active{% endif %}">
+          <i class="bi bi-cart-check-fill segment-icon"></i>
+          <div class="segment-text">
+            <span class="segment-title">For Sale</span>
+            <span class="segment-desc">Peer marketplace sales</span>
+          </div>
+        </a>
+
+        <!-- Free Giveaways -->
+        <a href="{{ url_for('listings.browse', listing_type='Free', city=selected_city, state=selected_state, category=selected_category, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by, all_locations=request.args.get('all_locations')) }}" 
+           class="type-segment {% if selected_listing_type == 'Free' %}active{% endif %}">
+          <i class="bi bi-gift-fill segment-icon"></i>
+          <div class="segment-text">
+            <span class="segment-title">Free Giveaways</span>
+            <span class="segment-desc">Pass on to junior batches</span>
+          </div>
+        </a>
+
+        <!-- Lend / Borrow -->
+        <a href="{{ url_for('listings.browse', listing_type='Lend/Borrow', city=selected_city, state=selected_state, category=selected_category, condition=selected_condition, college_name=selected_college_name, min_price=min_price, max_price=max_price, q=search_query, sort=sort_by, all_locations=request.args.get('all_locations')) }}" 
+           class="type-segment {% if selected_listing_type == 'Lend/Borrow' %}active{% endif %}">
+          <i class="bi bi-arrow-left-right segment-icon"></i>
+          <div class="segment-text">
+            <span class="segment-title">Lend / Borrow</span>
+            <span class="segment-desc">Exam-week peer sharing</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Sidebar Toggle Bar (Visible on screens < 900px) -->
+  <div class="mobile-sidebar-toggle-bar">
+    <button type="button" class="mobile-sidebar-toggle-btn" id="mobileSidebarToggle">
+      <span><i class="bi bi-funnel-fill text-accent me-2"></i> Category, Price &amp; College Filters</span>
+      <i class="bi bi-chevron-down" id="mobileSidebarIcon"></i>
+    </button>
+  </div>
+
+  <!-- 4. Main Catalog Layout (Sidebar for Category, Price, Condition, College + Product Grid) -->
+  <div class="catalog-layout">
+    <!-- Filters Sidebar -->
+    <aside class="filter-sidebar" id="filterSidebar">
+      <form action="{{ url_for('listings.browse') }}" method="GET">
+        <!-- Preserve toolbar & panel parameters -->
+        {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+        {% if selected_state %}<input type="hidden" name="state" value="{{ selected_state }}">{% endif %}
+        {% if selected_city %}<input type="hidden" name="city" value="{{ selected_city }}">{% endif %}
+        {% if selected_listing_type %}<input type="hidden" name="listing_type" value="{{ selected_listing_type }}">{% endif %}
+        {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+        {% if request.args.get('all_locations') %}<input type="hidden" name="all_locations" value="1">{% endif %}
+
+        <div class="filter-header-top">
+          <div class="filter-header-title">
+            <i class="bi bi-sliders text-accent"></i> Refine Results
+          </div>
+          <a href="{{ url_for('listings.browse') }}" class="filter-header-reset">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset All
+          </a>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="filter-section">
+          <label for="category" class="filter-title">Category</label>
+          <select name="category" id="category" class="form-select">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Price Range Filter -->
+        <div class="filter-section">
+          <div class="filter-title">Price Range (₹)</div>
+          <div class="d-grid gap-2" style="grid-template-columns: 1fr 1fr;">
+            <input type="number" name="min_price" value="{{ min_price or '' }}" placeholder="Min ₹" class="form-control" min="0">
+            <input type="number" name="max_price" value="{{ max_price or '' }}" placeholder="Max ₹" class="form-control" min="0">
+          </div>
+        </div>
+
+        <!-- Condition Filter -->
+        <div class="filter-section">
+          <label for="condition" class="filter-title">Condition</label>
+          <select name="condition" id="condition" class="form-select">
+            <option value="">Any Condition</option>
+            {% for cond in conditions %}
+              <option value="{{ cond }}" {% if selected_condition == cond %}selected{% endif %}>{{ cond }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- College Campus Filter -->
+        <div class="filter-section">
+          <label for="college_name" class="filter-title">College Campus</label>
+          <input 
+            type="text" 
+            name="college_name" 
+            id="college_name"
+            value="{{ selected_college_name }}" 
+            placeholder="Search any college..." 
+            class="form-control"
+            list="browseCollegesList"
+            autocomplete="off"
+          >
+          <datalist id="browseCollegesList">
+            <option value="All">All Campuses</option>
+            {% for col in colleges %}
+              <option value="{{ col.name }}">{{ col.city }} &bull; {{ col.short_name }}</option>
+            {% endfor %}
+          </datalist>
+          <div class="form-hint" style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">
+            Search any college in Gujarat or India.
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-teal">
+            <i class="bi bi-funnel-fill"></i> Apply Filters
+          </button>
+          <a href="{{ url_for('listings.browse') }}" class="btn btn-outline text-center">
+            <i class="bi bi-arrow-counterclockwise"></i> Clear All Filters
+          </a>
+        </div>
+      </form>
+    </aside>
+
+    <!-- Main Content: Active Filter Pills & Results Grid -->
+    <div>
+      <!-- 5. Active Filters Indicators & Clear All -->
+      {% set is_custom_location = (selected_city and selected_city != '') or (selected_state and selected_state not in ['', 'Gujarat', 'All']) or (selected_state == 'All' and request.args.get('all_locations') == '1') %}
+      {% set has_active_filters = search_query or selected_category or selected_condition or selected_listing_type or selected_college_name or min_price or max_price or is_custom_location %}
+
+      {% if has_active_filters %}
+        <div class="active-filters-bar mb-3">
+          <div class="active-filters-label">Active Filters:</div>
+          <div class="active-filters-list">
+            {% if search_query %}
+              <span class="active-filter-pill">
+                Keyword: "{{ search_query }}"
+                <a href="{{ url_for('listings.browse', category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove keyword filter">&times;</a>
+              </span>
+            {% endif %}
+
+            {% if selected_city %}
+              <span class="active-filter-pill">
+                Location: {{ selected_city }}
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city='', min_price=min_price, max_price=max_price, sort=sort_by) }}" class="pill-remove" title="Remove city filter">&times;</a>
+              </span>
+            {% elif selected_state == 'All' or request.args.get('all_locations') == '1' %}
+              <span class="active-filter-pill">
+                Location: All India
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state='Gujarat', city='', min_price=min_price, max_price=max_price, sort=sort_by) }}" class="pill-remove" title="Reset location to default">&times;</a>
+              </span>
+            {% elif selected_state and selected_state != 'Gujarat' %}
+              <span class="active-filter-pill">
+                State: {{ selected_state }}
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state='Gujarat', city='', min_price=min_price, max_price=max_price, sort=sort_by) }}" class="pill-remove" title="Reset state to Gujarat">&times;</a>
+              </span>
+            {% endif %}
+
+            {% if selected_listing_type %}
+              <span class="active-filter-pill">
+                Type: {{ selected_listing_type }}
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type='', state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove listing type filter">&times;</a>
+              </span>
+            {% endif %}
+
+            {% if selected_category %}
+              <span class="active-filter-pill">
+                Category: {{ selected_category }}
+                <a href="{{ url_for('listings.browse', q=search_query, category='', college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove category filter">&times;</a>
+              </span>
+            {% endif %}
+
+            {% if selected_condition %}
+              <span class="active-filter-pill">
+                Condition: {{ selected_condition }}
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name=selected_college_name, condition='', listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove condition filter">&times;</a>
+              </span>
+            {% endif %}
+
+            {% if selected_college_name %}
+              <span class="active-filter-pill">
+                Campus: {{ selected_college_name }}
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name='', condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove college filter">&times;</a>
+              </span>
+            {% endif %}
+
+            {% if min_price or max_price %}
+              <span class="active-filter-pill">
+                Price: ₹{{ min_price or 0 }} &ndash; ₹{{ max_price or 'Any' }}
+                <a href="{{ url_for('listings.browse', q=search_query, category=selected_category, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price='', max_price='', sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove price filter">&times;</a>
+              </span>
+            {% endif %}
+
+            <a href="{{ url_for('listings.browse') }}" class="active-filters-clear-all">
+              <i class="bi bi-x-circle-fill"></i> Clear All Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- 6. Results Count & Product Grid -->
+      {% if listings %}
+        <div class="grid-products">
+          {% for item in listings %}
+            <div class="card product-card">
+              <div class="product-thumb-wrap">
+                <img 
+                  src="{{ url_for('static', filename=item.primary_image_url) }}" 
+                  alt="{{ item.title }}" 
+                  class="product-thumb" 
+                  loading="lazy" 
+                  onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/no-photo.svg') }}';"
+                >
+                <div class="product-badge-overlay">
+                  {% if item.listing_type == 'Free' %}
+                    <span class="badge badge-free-giveaway"><i class="bi bi-gift-fill"></i> Free Giveaway</span>
+                  {% elif item.listing_type == 'Lend/Borrow' %}
+                    <span class="badge badge-lend"><i class="bi bi-arrow-left-right"></i> Peer Lend</span>
+                  {% else %}
+                    <span class="badge badge-available">For Sale</span>
+                  {% endif %}
+
+                  {% if item.city %}
+                    <span class="badge badge-city-pill">{{ item.city }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="product-body">
+                <div class="product-category-row">
+                  <span class="product-category">{{ item.category.split('&')[0] }}</span>
+                  <span class="product-condition-tag condition-tag-{{ item.condition | lower | replace(' ', '-') }}">{{ item.condition }}</span>
+                </div>
+
+                <a href="{{ url_for('listings.detail', listing_id=item.id) }}" class="product-title" title="{{ item.title }}">
+                  {{ item.title }}
+                </a>
+
+                <div class="product-college-row">
+                  <i class="bi bi-geo-alt-fill text-accent" style="flex-shrink: 0;"></i>
+                  <span>{{ item.display_college }} &bull; {{ item.pickup_area }}</span>
+                </div>
+
+                <div class="product-price-row">
+                  <div>
+                    {% if item.listing_type == 'Free' %}
+                      <span class="price-current text-accent" style="font-weight: 700;">FREE</span>
+                    {% elif item.listing_type == 'Lend/Borrow' %}
+                      <span class="price-current">{% if item.price == 0 %}Free Lend{% else %}{{ item.price | currency_inr }}/term{% endif %}</span>
+                      {% if item.lend_deposit %}
+                        <span class="deposit-tag" title="Refundable security deposit">Dep: ₹{{ item.lend_deposit }}</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="price-current">{{ item.price | currency_inr }}</span>
+                      {% if item.original_price %}
+                        <span class="price-original">₹{{ item.original_price }}</span>
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  {% if item.savings_percentage and item.listing_type == 'For Sale' %}
+                    <span class="badge-savings">{{ item.savings_percentage }}% OFF</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+          <div class="d-flex justify-content-center gap-2 mt-4 pt-2">
+            {% if pagination.has_prev %}
+              <a href="{{ url_for('listings.browse', page=pagination.prev_num, q=search_query, category=selected_category, college_id=selected_college_id, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="btn btn-outline btn-sm">
+                &larr; Previous
+              </a>
+            {% endif %}
+
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+              {% if p %}
+                {% if p == pagination.page %}
+                  <span class="btn btn-primary btn-sm" style="pointer-events: none;">{{ p }}</span>
+                {% else %}
+                  <a href="{{ url_for('listings.browse', page=p, q=search_query, category=selected_category, college_id=selected_college_id, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="btn btn-outline btn-sm">
+                    {{ p }}
+                  </a>
+                {% endif %}
+              {% else %}
+                <span class="px-2 text-muted">&hellip;</span>
+              {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+              <a href="{{ url_for('listings.browse', page=pagination.next_num, q=search_query, category=selected_category, college_id=selected_college_id, college_name=selected_college_name, condition=selected_condition, listing_type=selected_listing_type, state=selected_state, city=selected_city, min_price=min_price, max_price=max_price, sort=sort_by, all_locations=request.args.get('all_locations')) }}" class="btn btn-outline btn-sm">
+                Next &rarr;
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      {% else %}
+        <!-- Empty State -->
+        <div class="card p-5 text-center" style="border-radius: var(--radius-lg); background-color: var(--bg-card); border: 1px dashed var(--border-color);">
+          <div style="font-size: 3rem; color: #cbd5e1; margin-bottom: 12px;">
+            <i class="bi bi-inbox"></i>
+          </div>
+          <h3 class="h4 mb-2" style="color: var(--primary-navy); font-weight: 700;">No campus items found</h3>
+          <p class="text-muted mx-auto mb-4" style="max-width: 480px; line-height: 1.6;">
+            We couldn't find items matching your active location and filters. Try clearing some filters or exploring listings across All India.
+          </p>
+          <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a href="{{ url_for('listings.browse', all_locations='1') }}" class="btn btn-outline">Explore All India</a>
+            <a href="{{ url_for('listings.browse') }}" class="btn btn-outline">Reset All Filters</a>
+            <a href="{{ url_for('listings.create') }}" class="btn btn-teal">List an Item</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('mobileSidebarToggle');
+    var sidebar = document.getElementById('filterSidebar');
+    var icon = document.getElementById('mobileSidebarIcon');
+    if (toggleBtn && sidebar) {
+      toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('is-open');
+        if (icon) {
+          if (sidebar.classList.contains('is-open')) {
+            icon.classList.remove('bi-chevron-down');
+            icon.classList.add('bi-chevron-up');
+          } else {
+            icon.classList.remove('bi-chevron-up');
+            icon.classList.add('bi-chevron-down');
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

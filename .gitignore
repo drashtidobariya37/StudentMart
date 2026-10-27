@@ -1,0 +1,47 @@
+# ─── Environment & Secrets ────────────────────────────────────────────────────
+.env
+.env.local
+backend/instance/secret_key
+
+# ─── SQLite Database ──────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+backend/instance/*.db
+!backend/instance/.gitkeep
+
+# ─── Uploaded Media (runtime user uploads — keep folder structure via .gitkeep)
+# Exclude actual uploaded files but keep the .gitkeep placeholders
+frontend/static/uploads/listings/*
+frontend/static/uploads/urgent/*
+frontend/static/uploads/avatars/*
+!frontend/static/uploads/listings/.gitkeep
+!frontend/static/uploads/urgent/.gitkeep
+!frontend/static/uploads/avatars/.gitkeep
+
+# ─── Python Cache & Bytecode ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ─── Virtual Environments ─────────────────────────────────────────────────────
+env/
+venv/
+ENV/
+.venv/
+
+# ─── Testing & Coverage ───────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ─── Operating System Files ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# ─── Old app/ folder at root (removed after restructure) ──────────────────────
+/app/

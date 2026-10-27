@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Orders &amp; Disputes &bull; Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);"><a href="{{ url_for('admin.dashboard') }}" style="color: inherit; text-decoration: none;">&larr; Admin Dashboard</a></div>
+      <h1 style="font-size: 1.85rem; color: var(--primary-navy); margin-top: 4px;">Orders &amp; Escrow Disputes</h1>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <a href="{{ url_for('admin.orders') }}" class="btn {% if not selected_status %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All Orders</a>
+      <a href="{{ url_for('admin.orders', status='DISPUTED') }}" class="btn {% if selected_status == 'DISPUTED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm" style="border-color: #ef4444; color: #dc2626;">Disputed</a>
+      <a href="{{ url_for('admin.orders', status='PENDING') }}" class="btn {% if selected_status == 'PENDING' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Pending</a>
+      <a href="{{ url_for('admin.orders', status='COMPLETED') }}" class="btn {% if selected_status == 'COMPLETED' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Completed</a>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 24px;">
+    {% if orders %}
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Item</th>
+              <th>Amount</th>
+              <th>Buyer</th>
+              <th>Seller</th>
+              <th>Status</th>
+              <th>Payment Status</th>
+              <th>Dispute Detail</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ord in orders %}
+              <tr {% if ord.status == 'DISPUTED' %}style="background-color: #fff1f2;"{% endif %}>
+                <td style="font-family: monospace; font-size: 0.82rem;">{{ ord.order_number }}</td>
+                <td>
+                  <a href="{{ url_for('orders.detail', order_id=ord.id) }}" target="_blank" style="font-weight: 600; color: var(--primary-navy);">
+                    {{ ord.listing.title[:25] }}...
+                  </a>
+                </td>
+                <td style="font-weight: 700;">{{ ord.amount | currency_inr }}</td>
+                <td>{{ ord.buyer.display_name }}</td>
+                <td>{{ ord.seller.display_name }}</td>
+                <td>
+                  <span class="badge {% if ord.status == 'COMPLETED' %}badge-available{% elif ord.status == 'DISPUTED' %}badge-danger{% else %}badge-reserved{% endif %}">
+                    {{ ord.status }}
+                  </span>
+                </td>
+                <td><span style="font-size: 0.8rem;">{{ ord.payment_status }}</span></td>
+                <td style="max-width: 200px; font-size: 0.82rem; line-height: 1.4;">
+                  {% if ord.dispute_reason %}
+                    <strong style="color: #991b1b;">Reason:</strong> {{ ord.dispute_reason }}
+                  {% else %}
+                    <span style="color: var(--text-light);">&mdash;</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if ord.status == 'DISPUTED' %}
+                    <div style="display: flex; gap: 4px; flex-direction: column;">
+                      <form action="{{ url_for('admin.resolve_dispute', order_id=ord.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="resolution" value="REFUND_BUYER">
+                        <input type="hidden" name="resolution_notes" value="Admin confirmed refund to buyer.">
+                        <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 2px 6px; width: 100%;">
+                          Refund Buyer
+                        </button>
+                      </form>
+
+                      <form action="{{ url_for('admin.resolve_dispute', order_id=ord.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="resolution" value="RELEASE_SELLER">
+                        <input type="hidden" name="resolution_notes" value="Admin confirmed handoff to seller.">
+                        <button type="submit" class="btn btn-teal btn-sm" style="font-size: 0.72rem; padding: 2px 6px; width: 100%;">
+                          Release to Seller
+                        </button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <a href="{{ url_for('orders.detail', order_id=ord.id) }}" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 8px;">
+                      View
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 30px 0;">No orders found.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

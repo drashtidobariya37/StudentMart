@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Student Accounts &bull; Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <div style="font-size: 0.85rem; color: var(--text-muted);"><a href="{{ url_for('admin.dashboard') }}" style="color: inherit; text-decoration: none;">&larr; Admin Dashboard</a></div>
+    <h1 style="font-size: 1.85rem; color: var(--primary-navy); margin-top: 4px;">Student Accounts Directory</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Manage student verification badges and active campus statuses</p>
+  </div>
+
+  <div class="card" style="padding: 24px;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>College Campus</th>
+            <th>Course / Year</th>
+            <th>Roll / ID</th>
+            <th>Verification</th>
+            <th>Admin Role</th>
+            <th>Toggle Verification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td>#{{ u.id }}</td>
+              <td>
+                <div style="font-weight: 600; color: var(--primary-navy);">
+                  {{ u.display_name }}
+                </div>
+              </td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.display_college }}</td>
+              <td>{{ u.course_year or '&mdash;' }}</td>
+              <td>{{ u.student_id_roll or '&mdash;' }}</td>
+              <td>
+                {% if u.is_verified_student %}
+                  <span class="badge badge-verified-student">Verified</span>
+                {% else %}
+                  <span class="badge" style="background-color: #f1f5f9; color: #64748b;">Unverified</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if u.is_admin %}
+                  <span class="badge" style="background-color: #fef3c7; color: #92400e;">Admin</span>
+                {% else %}
+                  <span style="color: var(--text-muted); font-size: 0.8rem;">Student</span>
+                {% endif %}
+              </td>
+              <td>
+                <form action="{{ url_for('admin.toggle_verify_user', user_id=u.id) }}" method="POST">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.75rem; padding: 3px 8px;">
+                    {% if u.is_verified_student %}Revoke Badge{% else %}Verify Student{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

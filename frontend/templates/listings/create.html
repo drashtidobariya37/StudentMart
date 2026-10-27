@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Post a Listing &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 6px;">Post a Campus Listing</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Sell, give away, or lend your books, calculators, lab coats, tools, or hostel items to fellow students across Gujarat and India.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 30px; box-shadow: var(--shadow-md);">
+    <form action="{{ url_for('listings.create') }}" method="POST" enctype="multipart/form-data" id="createListingForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Exchange Mode Selector (For Sale / Free Giveaway / Lend/Borrow) -->
+      <div class="form-group mb-4">
+        <label class="form-label fw-bold">Select Exchange Mode *</label>
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="exchange-mode-card">
+              <input type="radio" name="listing_type" value="For Sale" checked onchange="handleModeChange(this.value)">
+              <div class="exchange-mode-box">
+                <i class="bi bi-cart-check text-teal"></i>
+                <strong>For Sale</strong>
+                <small>Sell at student discount</small>
+              </div>
+            </label>
+          </div>
+          <div class="col-md-4">
+            <label class="exchange-mode-card">
+              <input type="radio" name="listing_type" value="Free" onchange="handleModeChange(this.value)">
+              <div class="exchange-mode-box">
+                <i class="bi bi-gift-fill text-success"></i>
+                <strong>Free Giveaway</strong>
+                <small>Pass forward at ₹0</small>
+              </div>
+            </label>
+          </div>
+          <div class="col-md-4">
+            <label class="exchange-mode-card">
+              <input type="radio" name="listing_type" value="Lend/Borrow" onchange="handleModeChange(this.value)">
+              <div class="exchange-mode-box">
+                <i class="bi bi-arrow-left-right text-warning"></i>
+                <strong>Lend / Borrow</strong>
+                <small>Temporary peer borrow</small>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item Title -->
+      <div class="form-group mb-3">
+        <label class="form-label" for="title">Item Title *</label>
+        <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Casio fx-991EX Classwiz, Higher Engg Math (B.S. Grewal), Mini Drafter with Sheet Clips" required maxlength="160">
+        <div class="form-hint">Include edition, brand, or model number for better discovery.</div>
+      </div>
+
+      <!-- Category & Condition -->
+      <div class="grid-2 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="category">Category *</label>
+          <select id="category" name="category" class="form-control" required>
+            <option value="">Choose category...</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="condition">Item Condition *</label>
+          <select id="condition" name="condition" class="form-control" required>
+            <option value="">Select condition...</option>
+            {% for cond in conditions %}
+              <option value="{{ cond }}">{{ cond }}</option>
+            {% endfor %}
+          </select>
+          <div class="form-hint">Choose the most accurate condition for buyer transparency.</div>
+        </div>
+      </div>
+
+      <!-- Condition Notes / Flaws -->
+      <div class="form-group mb-3">
+        <label class="form-label" for="condition_notes">Condition Details &amp; Flaws (Optional)</label>
+        <textarea id="condition_notes" name="condition_notes" rows="2" class="form-control" placeholder="Describe any scratches, damage, missing parts, handwritten notes, highlighting, or torn pages (e.g. 'Chapters 1-3 highlighted in yellow, binding intact, cover has minor crease')..."></textarea>
+        <div class="form-hint">Describe honest flaws so fellow campus peers know exactly what they are receiving.</div>
+      </div>
+
+      <!-- Pricing Section (Changes dynamically with Mode) -->
+      <div id="pricingBlock" class="grid-2 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="price" id="priceLabel">Selling Price in INR (₹) *</label>
+          <input type="number" id="price" name="price" class="form-control" placeholder="e.g. 450" required min="1">
+          <div class="form-hint" id="priceHint">Set a fair student price for quick campus handoff.</div>
+        </div>
+
+        <div class="form-group" id="origPriceGroup">
+          <label class="form-label" for="original_price">Original Purchase MRP in INR (₹)</label>
+          <input type="number" id="original_price" name="original_price" class="form-control" placeholder="e.g. 950 (Optional)" min="1">
+          <div class="form-hint">Used to calculate student savings percentage tag.</div>
+        </div>
+      </div>
+
+      <!-- Lending Terms Block (Shown only when Lend/Borrow selected) -->
+      <div id="lendingBlock" class="p-3 mb-3 rounded bg-light border" style="display: none;">
+        <h5 class="fw-bold mb-2 text-primary"><i class="bi bi-clock-history"></i> Peer Lending Terms</h5>
+        <div class="grid-2 mb-2">
+          <div class="form-group">
+            <label class="form-label" for="lend_duration">Lending Duration</label>
+            <input type="text" id="lend_duration" name="lend_duration" class="form-control" placeholder="e.g. 1 week, Exam week, Semester-long">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lend_deposit">Refundable Security Deposit (₹)</label>
+            <input type="number" id="lend_deposit" name="lend_deposit" class="form-control" placeholder="e.g. 500 (Returned upon safe return)" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="lend_terms">Return Expectations &amp; Condition</label>
+          <textarea id="lend_terms" name="lend_terms" rows="2" class="form-control" placeholder="e.g. Must be returned in same working condition. Battery must not be removed. Returned before Friday practical."></textarea>
+        </div>
+      </div>
+
+      <!-- Location: State and City (Prioritizing Gujarat, Ahmedabad & Gandhinagar) -->
+      <div class="grid-2 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="state">State *</label>
+          <select id="state" name="state" class="form-control" required>
+            {% for st in all_states %}
+              <option value="{{ st }}" {% if (user.preferred_state or 'Gujarat') == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="city">City / Campus Hub *</label>
+          <input 
+            type="text" 
+            id="city" 
+            name="city" 
+            class="form-control" 
+            placeholder="e.g. Ahmedabad, Gandhinagar, Surat..." 
+            value="{{ user.preferred_city or 'Ahmedabad' }}" 
+            required
+            list="gujaratCreateCities"
+          >
+          <datalist id="gujaratCreateCities">
+            {% for gcity in gujarat_cities %}
+              <option value="{{ gcity }}"></option>
+            {% endfor %}
+          </datalist>
+        </div>
+      </div>
+
+      <!-- College and Pickup Spot (Searchable & Custom College Supported) -->
+      <div class="grid-2 mb-3">
+        <div class="form-group">
+          <label class="form-label" for="college_name_input">College Campus *</label>
+          <input 
+            type="text" 
+            id="college_name_input" 
+            name="college_name_input" 
+            class="form-control" 
+            placeholder="Type college name or choose from suggestions..." 
+            value="{{ user.college_name if user else '' }}" 
+            list="collegesList"
+            required
+            autocomplete="off"
+          >
+          <datalist id="collegesList">
+            {% for c in colleges %}
+              <option value="{{ c.name }}">{{ c.city }} &bull; {{ c.short_name }}</option>
+            {% endfor %}
+          </datalist>
+          <input type="hidden" name="college_id" id="college_id_hidden" value="{{ user.college_id if user and user.college_id else '' }}">
+          <div class="form-hint">Select a suggested college or enter your own campus name manually.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pickup_area">Designated Campus Meeting Area *</label>
+          <input type="text" id="pickup_area" name="pickup_area" class="form-control" placeholder="e.g. Central Library entrance, Student Canteen, Main Gate" required>
+          <div class="form-hint">Safe public daylight spots on campus.</div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group mb-3">
+        <label class="form-label" for="description">Detailed Description *</label>
+        <textarea id="description" name="description" rows="4" class="form-control" placeholder="Mention item age, edition, included accessories (cables, covers, batteries), syllabus branch, or semester relevance..." required></textarea>
+      </div>
+
+      <!-- Image Upload with Live Preview & Cover Photo Selector -->
+      <div class="form-group mb-4">
+        <label class="form-label" for="listingImageInput">Real Item Photos</label>
+        <input 
+          type="file" 
+          id="listingImageInput" 
+          name="images" 
+          class="form-control" 
+          accept="image/png, image/jpeg, image/jpg, image/webp" 
+          multiple
+        >
+        <input type="hidden" name="primary_image_index" id="primaryImageIndex" value="0">
+        <div class="form-hint">
+          Upload 1 or more actual photos of your item (PNG, JPG, or WEBP, max 5MB each). 
+          <strong>Click 'Set Cover'</strong> on any preview below to pick which photo appears first on the marketplace card.
+        </div>
+        
+        <!-- Live Client-side Thumbnail Grid -->
+        <div id="imagePreviewGrid" class="image-preview-grid"></div>
+      </div>
+
+      <!-- Trust Checkbox -->
+      <div class="mb-4" style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+        <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer;">
+          <input type="checkbox" required style="margin-top: 3px;">
+          <span>
+            I confirm that this item is my personal property and does not violate Student Mart's 
+            <a href="{{ url_for('main.safety') }}#prohibited" target="_blank" style="color: var(--accent-teal);">Prohibited Items Policy</a> 
+            (no test cheat material, institutional property, or dangerous items).
+          </span>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px;">
+        <a href="{{ url_for('listings.browse') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-teal btn-lg">Publish Listing</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function handleModeChange(mode) {
+  const priceInput = document.getElementById("price");
+  const priceLabel = document.getElementById("priceLabel");
+  const priceHint = document.getElementById("priceHint");
+  const pricingBlock = document.getElementById("pricingBlock");
+  const lendingBlock = document.getElementById("lendingBlock");
+  const origPriceGroup = document.getElementById("origPriceGroup");
+
+  if (mode === "Free") {
+    priceInput.value = "0";
+    priceInput.required = false;
+    pricingBlock.style.display = "none";
+    lendingBlock.style.display = "none";
+  } else if (mode === "Lend/Borrow") {
+    priceInput.value = "0";
+    priceInput.required = false;
+    priceLabel.innerText = "Rental / Borrowing Fee in INR (₹)";
+    priceHint.innerText = "Enter ₹0 for friendly free borrowing, or a small token fee.";
+    pricingBlock.style.display = "grid";
+    origPriceGroup.style.display = "none";
+    lendingBlock.style.display = "block";
+  } else {
+    // For Sale
+    priceInput.required = true;
+    priceLabel.innerText = "Your Selling Price in INR (₹) *";
+    priceHint.innerText = "Set a fair student price for quick campus handoff.";
+    pricingBlock.style.display = "grid";
+    origPriceGroup.style.display = "block";
+    lendingBlock.style.display = "none";
+  }
+}
+
+// Multi-image client-side preview with cover photo selection
+const imageInput = document.getElementById("listingImageInput");
+const previewGrid = document.getElementById("imagePreviewGrid");
+const primaryIndexInput = document.getElementById("primaryImageIndex");
+
+if (imageInput && previewGrid) {
+  imageInput.addEventListener("change", function(e) {
+    previewGrid.innerHTML = "";
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    primaryIndexInput.value = "0";
+
+    files.forEach((file, index) => {
+      if (!file.type.startsWith("image/")) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const item = document.createElement("div");
+        item.className = "image-preview-item" + (index === 0 ? " is-cover" : "");
+        item.dataset.index = index;
+
+        item.innerHTML = `
+          <img src="${event.target.result}" class="image-preview-thumb" alt="Photo ${index + 1}">
+          <span class="image-cover-badge" style="${index === 0 ? '' : 'display: none;'}">Cover</span>
+          <div class="image-preview-actions">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 600; margin: 0;">
+              <input type="radio" name="cover_radio" value="${index}" ${index === 0 ? 'checked' : ''} onchange="selectCoverPhoto(${index})">
+              <span>Set as Cover</span>
+            </label>
+          </div>
+        `;
+        previewGrid.appendChild(item);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+function selectCoverPhoto(idx) {
+  if (primaryIndexInput) primaryIndexInput.value = idx;
+  document.querySelectorAll(".image-preview-item").forEach(item => {
+    const isChosen = parseInt(item.dataset.index) === idx;
+    item.classList.toggle("is-cover", isChosen);
+    const badge = item.querySelector(".image-cover-badge");
+    if (badge) badge.style.display = isChosen ? "" : "none";
+  });
+}
+</script>
+{% endblock %}

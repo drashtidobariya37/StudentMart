@@ -1,0 +1,27 @@
+databases:
+  - name: studentmart-db
+    databaseName: studentmart
+    user: studentmart_user
+    plan: free
+
+services:
+  - type: web
+    name: student-mart
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: MARKETPLACE_NAME
+        value: "Student Mart"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: studentmart-db
+          property: connectionString

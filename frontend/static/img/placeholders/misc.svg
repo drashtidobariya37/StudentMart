@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#faf8f5"/>
+  <rect x="40" y="40" width="520" height="320" rx="16" fill="#e7e5e0"/>
+  <g transform="translate(230, 95)">
+    <circle cx="70" cy="80" r="70" fill="#64748b" fill-opacity="0.15"/>
+    <rect x="35" y="45" width="70" height="70" rx="10" fill="#0f172a"/>
+    <rect x="45" y="55" width="20" height="20" rx="4" fill="#c25e3e"/>
+    <rect x="75" y="55" width="20" height="20" rx="4" fill="#38bdf8"/>
+    <rect x="45" y="85" width="20" height="20" rx="4" fill="#f59e0b"/>
+    <rect x="75" y="85" width="20" height="20" rx="4" fill="#c25e3e"/>
+  </g>
+  <text x="300" y="295" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="middle">Miscellaneous Campus Items</text>
+  <text x="300" y="325" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="14" fill="#64748b" text-anchor="middle">College Merchandise, Gym Gear &amp; Dorm Utilities</text>
+</svg>

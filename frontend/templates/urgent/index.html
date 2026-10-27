@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}Urgent Need Feed &bull; Student Mart (Gujarat &amp; India){% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- 1. Page Heading, Subtitle & Post Button -->
+  <div class="urgent-header-section mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h1 class="urgent-page-title">Campus Urgent Needs Feed</h1>
+        <p class="urgent-page-subtitle">
+          Find and respond to fast-turnaround peer requests for textbooks, lab coats, calculators, and notes before exams and practicals.
+        </p>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="urgent-results-count-badge">
+          <i class="bi bi-lightning-charge-fill text-accent"></i>
+          <span>{{ requests|length }} {% if requests|length == 1 %}urgent request found{% else %}urgent requests found{% endif %}</span>
+          {% if selected_city and selected_city != 'All' %}
+            <span class="count-context">&bull; in {{ selected_city }}</span>
+          {% elif selected_state and selected_state != 'All' %}
+            <span class="count-context">&bull; in {{ selected_state }}</span>
+          {% elif selected_state == 'All' or request.args.get('all_locations') == '1' %}
+            <span class="count-context">&bull; India-Wide</span>
+          {% endif %}
+        </div>
+        <a href="{{ url_for('urgent.create') }}" class="btn btn-accent urgent-post-btn">
+          <i class="bi bi-plus-circle-fill"></i>
+          <span>Post an Urgent Need</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Gujarat Hubs Section -->
+  <div class="urgent-hubs-card mb-4">
+    <div class="urgent-hubs-header">
+      <div class="urgent-hubs-title">
+        <i class="bi bi-geo-alt-fill text-accent"></i>
+        <span>Gujarat Hubs:</span>
+      </div>
+      <div class="urgent-hubs-hint">
+        Select a campus hub to view local student needs
+      </div>
+    </div>
+
+    <div class="urgent-hubs-grid">
+      <!-- Ahmedabad -->
+      <a href="{{ url_for('urgent.feed', city='Ahmedabad', state='Gujarat', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status) }}"
+         class="urgent-hub-btn {% if selected_city == 'Ahmedabad' %}active{% endif %}"
+         title="Urgent requests in Ahmedabad campus hub">
+        <span class="hub-btn-name">Ahmedabad</span>
+        <span class="hub-btn-count">{{ ahmedabad_count }}</span>
+      </a>
+
+      <!-- Gandhinagar -->
+      <a href="{{ url_for('urgent.feed', city='Gandhinagar', state='Gujarat', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status) }}"
+         class="urgent-hub-btn {% if selected_city == 'Gandhinagar' %}active{% endif %}"
+         title="Urgent requests in Gandhinagar campus hub">
+        <span class="hub-btn-name">Gandhinagar</span>
+        <span class="hub-btn-count">{{ gandhinagar_count }}</span>
+      </a>
+
+      <!-- Surat -->
+      <a href="{{ url_for('urgent.feed', city='Surat', state='Gujarat', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status) }}"
+         class="urgent-hub-btn {% if selected_city == 'Surat' %}active{% endif %}"
+         title="Urgent requests in Surat">
+        <span class="hub-btn-name">Surat</span>
+        <span class="hub-btn-count">{{ surat_count }}</span>
+      </a>
+
+      <!-- Vadodara -->
+      <a href="{{ url_for('urgent.feed', city='Vadodara', state='Gujarat', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status) }}"
+         class="urgent-hub-btn {% if selected_city == 'Vadodara' %}active{% endif %}"
+         title="Urgent requests in Vadodara">
+        <span class="hub-btn-name">Vadodara</span>
+        <span class="hub-btn-count">{{ vadodara_count }}</span>
+      </a>
+
+      <!-- All Gujarat -->
+      <a href="{{ url_for('urgent.feed', state='Gujarat', city='All', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status) }}"
+         class="urgent-hub-btn {% if selected_state == 'Gujarat' and (not selected_city or selected_city == 'All') and not (request.args.get('all_locations') == '1' or selected_state == 'All') %}active{% endif %}"
+         title="Urgent requests across Gujarat state">
+        <span class="hub-btn-name">All Gujarat</span>
+        <span class="hub-btn-count">{{ gujarat_total }}</span>
+      </a>
+
+      <!-- All India -->
+      <a href="{{ url_for('urgent.feed', state='All', city='All', all_locations='1', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status) }}"
+         class="urgent-hub-btn {% if selected_state == 'All' or request.args.get('all_locations') == '1' %}active{% endif %}"
+         title="Urgent requests across all Indian colleges">
+        <span class="hub-btn-name">All India</span>
+        <span class="hub-btn-count">{{ all_india_count }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 3. Search Bar -->
+  <div class="urgent-search-card mb-4">
+    <form action="{{ url_for('urgent.feed') }}" method="GET" class="urgent-search-form">
+      <!-- Preserve existing filters when searching -->
+      {% if selected_urgency and selected_urgency != 'All' %}<input type="hidden" name="urgency" value="{{ selected_urgency }}">{% endif %}
+      {% if selected_category and selected_category != 'All' %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+      {% if selected_status and selected_status != 'Active' %}<input type="hidden" name="status" value="{{ selected_status }}">{% endif %}
+      {% if selected_city %}<input type="hidden" name="city" value="{{ selected_city }}">{% endif %}
+      {% if selected_state %}<input type="hidden" name="state" value="{{ selected_state }}">{% endif %}
+      {% if request.args.get('all_locations') %}<input type="hidden" name="all_locations" value="1">{% endif %}
+
+      <div class="urgent-search-wrap">
+        <i class="bi bi-search urgent-search-icon"></i>
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ search_query }}" 
+          placeholder="Search urgent needs, items or categories…" 
+          class="form-control urgent-search-input"
+          aria-label="Search urgent needs"
+        >
+        {% if search_query %}
+          <a href="{{ url_for('urgent.feed', urgency=selected_urgency, category=selected_category, status=selected_status, city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" 
+             class="urgent-search-clear" 
+             title="Clear keyword search">
+            <i class="bi bi-x"></i>
+          </a>
+        {% endif %}
+        <button type="submit" class="btn btn-accent urgent-search-btn">
+          <i class="bi bi-search"></i>
+          <span>Search</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Mobile Filter Toggle Button (< 900px) -->
+  {% set active_filter_count = 0 %}
+  {% if search_query %}{% set active_filter_count = active_filter_count + 1 %}{% endif %}
+  {% if selected_urgency and selected_urgency != 'All' %}{% set active_filter_count = active_filter_count + 1 %}{% endif %}
+  {% if selected_category and selected_category != 'All' %}{% set active_filter_count = active_filter_count + 1 %}{% endif %}
+  {% if selected_status and selected_status != 'Active' %}{% set active_filter_count = active_filter_count + 1 %}{% endif %}
+  <div class="mobile-urgent-toggle-bar">
+    <button type="button" class="mobile-urgent-toggle-btn" id="mobileUrgentToggleBtn">
+      <span>
+        <i class="bi bi-sliders text-accent me-2"></i>
+        Filter Urgent Requests
+        {% if active_filter_count > 0 %}
+          <span class="badge bg-secondary ms-1">{{ active_filter_count }}</span>
+        {% endif %}
+      </span>
+      <i class="bi bi-chevron-down toggle-chevron" id="mobileUrgentChevron"></i>
+    </button>
+  </div>
+
+  <!-- 4. Organized Filter Panel -->
+  <div class="urgent-filter-panel mb-4" id="urgentFilterPanel">
+    <form action="{{ url_for('urgent.feed') }}" method="GET" id="urgentFilterForm">
+      <!-- Preserve keyword and location when updating filters -->
+      {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+      {% if selected_city %}<input type="hidden" name="city" value="{{ selected_city }}">{% endif %}
+      {% if selected_state %}<input type="hidden" name="state" value="{{ selected_state }}">{% endif %}
+      {% if request.args.get('all_locations') %}<input type="hidden" name="all_locations" value="1">{% endif %}
+
+      <div class="urgent-filter-panel-header">
+        <div class="urgent-filter-panel-title">
+          <i class="bi bi-sliders text-accent"></i>
+          <span>Filter Requests</span>
+        </div>
+        <a href="{{ url_for('urgent.feed', city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" class="urgent-filter-panel-reset">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
+        </a>
+      </div>
+
+      <div class="urgent-filters-grid">
+        <!-- Urgency Tier Section -->
+        <div class="urgent-filter-group">
+          <label class="urgent-filter-label">
+            <i class="bi bi-alarm-fill text-accent"></i>
+            <span>Urgency Tier</span>
+          </label>
+          <div class="chip-selector-group">
+            <label class="chip-selector-option">
+              <input type="radio" name="urgency" value="All" {% if not selected_urgency or selected_urgency == 'All' %}checked{% endif %}>
+              <span class="chip-selector-label">All Urgencies</span>
+            </label>
+            <label class="chip-selector-option">
+              <input type="radio" name="urgency" value="Within 1 hour" {% if selected_urgency == 'Within 1 hour' %}checked{% endif %}>
+              <span class="chip-selector-label"><i class="bi bi-lightning-charge-fill"></i> Within 1 hour</span>
+            </label>
+            <label class="chip-selector-option">
+              <input type="radio" name="urgency" value="Today" {% if selected_urgency == 'Today' %}checked{% endif %}>
+              <span class="chip-selector-label"><i class="bi bi-clock-fill"></i> Today</span>
+            </label>
+            <label class="chip-selector-option">
+              <input type="radio" name="urgency" value="Tomorrow" {% if selected_urgency == 'Tomorrow' %}checked{% endif %}>
+              <span class="chip-selector-label"><i class="bi bi-calendar-event"></i> Tomorrow</span>
+            </label>
+            <label class="chip-selector-option">
+              <input type="radio" name="urgency" value="Flexible" {% if selected_urgency == 'Flexible' %}checked{% endif %}>
+              <span class="chip-selector-label"><i class="bi bi-calendar-check"></i> Flexible</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Category & Status Two-Column Row -->
+        <div class="urgent-filter-row-two-col">
+          <!-- Category Section -->
+          <div class="urgent-filter-group">
+            <label for="urgentCategorySelect" class="urgent-filter-label">
+              <i class="bi bi-grid-fill text-accent"></i>
+              <span>Category</span>
+            </label>
+            <select name="category" id="urgentCategorySelect" class="form-select urgent-select">
+              <option value="All" {% if not selected_category or selected_category == 'All' %}selected{% endif %}>All Categories</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Status Section -->
+          <div class="urgent-filter-group">
+            <label class="urgent-filter-label">
+              <i class="bi bi-check-circle-fill text-accent"></i>
+              <span>Status</span>
+            </label>
+            <div class="chip-selector-group">
+              <label class="chip-selector-option">
+                <input type="radio" name="status" value="Active" {% if selected_status == 'Active' or not selected_status %}checked{% endif %}>
+                <span class="chip-selector-label">Active Only</span>
+              </label>
+              <label class="chip-selector-option">
+                <input type="radio" name="status" value="Fulfilled" {% if selected_status == 'Fulfilled' %}checked{% endif %}>
+                <span class="chip-selector-label">Fulfilled</span>
+              </label>
+              <label class="chip-selector-option">
+                <input type="radio" name="status" value="Expired" {% if selected_status == 'Expired' %}checked{% endif %}>
+                <span class="chip-selector-label">Expired</span>
+              </label>
+              <label class="chip-selector-option">
+                <input type="radio" name="status" value="All" {% if selected_status == 'All' %}checked{% endif %}>
+                <span class="chip-selector-label">All Statuses</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="urgent-filter-actions">
+        <button type="submit" class="btn btn-accent urgent-apply-btn">
+          <i class="bi bi-funnel-fill"></i>
+          <span>Apply Filters</span>
+        </button>
+        <a href="{{ url_for('urgent.feed', city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" class="btn btn-outline urgent-clear-btn">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          <span>Clear Filters</span>
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- 5. Active Filter Tags Bar -->
+  {% set has_active = search_query or (selected_urgency and selected_urgency != 'All') or (selected_category and selected_category != 'All') or (selected_status and selected_status != 'Active') or selected_city or (selected_state and selected_state != 'Gujarat') or request.args.get('all_locations') == '1' %}
+  {% if has_active %}
+    <div class="active-filters-bar mb-4">
+      <span class="active-filters-label">
+        <i class="bi bi-funnel"></i> Active:
+      </span>
+      <div class="active-filters-list">
+        {% if search_query %}
+          <span class="active-filter-pill">
+            <i class="bi bi-search"></i> "{{ search_query }}"
+            <a href="{{ url_for('urgent.feed', urgency=selected_urgency, category=selected_category, status=selected_status, city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove search keyword">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if selected_city and selected_city != 'All' %}
+          <span class="active-filter-pill">
+            <i class="bi bi-geo-alt"></i> {{ selected_city }}
+            <a href="{{ url_for('urgent.feed', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status, state='Gujarat', city='All') }}" class="pill-remove" title="Remove city filter">&times;</a>
+          </span>
+        {% elif request.args.get('all_locations') == '1' or selected_state == 'All' %}
+          <span class="active-filter-pill">
+            <i class="bi bi-globe-americas"></i> All India
+            <a href="{{ url_for('urgent.feed', q=search_query, urgency=selected_urgency, category=selected_category, status=selected_status, state='Gujarat', city='All') }}" class="pill-remove" title="Reset to Gujarat">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if selected_urgency and selected_urgency != 'All' %}
+          <span class="active-filter-pill">
+            <i class="bi bi-alarm"></i> {{ selected_urgency }}
+            <a href="{{ url_for('urgent.feed', q=search_query, category=selected_category, status=selected_status, city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove urgency filter">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if selected_category and selected_category != 'All' %}
+          <span class="active-filter-pill">
+            <i class="bi bi-grid"></i> {{ selected_category }}
+            <a href="{{ url_for('urgent.feed', q=search_query, urgency=selected_urgency, status=selected_status, city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Remove category filter">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if selected_status and selected_status != 'Active' %}
+          <span class="active-filter-pill">
+            <i class="bi bi-check-circle"></i> Status: {{ selected_status }}
+            <a href="{{ url_for('urgent.feed', q=search_query, urgency=selected_urgency, category=selected_category, status='Active', city=selected_city, state=selected_state, all_locations=request.args.get('all_locations')) }}" class="pill-remove" title="Reset to Active Only">&times;</a>
+          </span>
+        {% endif %}
+      </div>
+
+      <a href="{{ url_for('urgent.feed') }}" class="active-filters-clear-all" title="Reset all search and filter options">
+        <i class="bi bi-trash3"></i> Clear all
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- 6. Urgent Cards Grid / Fallback Message -->
+  {% if requests %}
+    <div class="grid-3 urgent-grid">
+      {% for req in requests %}
+        <div class="urgent-card {% if req.urgency == 'Within 1 hour' %}urgent-card-critical{% endif %}">
+          <div class="urgent-card-header">
+            <span class="urgency-tag urgency-{{ req.urgency | lower | replace(' ', '-') }}">
+              <i class="bi bi-alarm-fill"></i> {{ req.urgency }}
+            </span>
+            <span class="urgent-countdown" title="Time remaining before request expires">
+              <i class="bi bi-clock-history"></i> {{ req.time_remaining_str }}
+            </span>
+          </div>
+
+          <div class="urgent-card-body">
+            <h3 class="urgent-card-title">
+              <a href="{{ url_for('urgent.detail', request_id=req.id) }}">{{ req.title }}</a>
+            </h3>
+            <p class="urgent-card-desc">{{ req.description[:130] }}{% if req.description|length > 130 %}...{% endif %}</p>
+
+            <div class="urgent-meta-pills">
+              <span class="meta-pill"><i class="bi bi-folder2-open"></i> {{ req.category.split('&')[0] }}</span>
+              <span class="meta-pill"><i class="bi bi-geo-alt"></i> {{ req.city }}, {{ req.state }}</span>
+              <span class="meta-pill"><i class="bi bi-mortarboard"></i> {{ req.display_college }}</span>
+            </div>
+
+            <div class="urgent-pickup-box">
+              <i class="bi bi-pin-map text-accent"></i>
+              <span>Pickup: <strong>{{ req.preferred_pickup }}</strong></span>
+            </div>
+          </div>
+
+          <div class="urgent-card-footer">
+            <div class="urgent-budget">
+              {% if req.budget and req.budget > 0 %}
+                <span class="budget-label">Budget:</span>
+                <span class="budget-val">{{ req.budget | currency_inr }}</span>
+              {% else %}
+                <span class="badge-free">Free Help / Borrow</span>
+              {% endif %}
+            </div>
+
+            <a href="{{ url_for('urgent.detail', request_id=req.id) }}" class="btn btn-sm btn-accent">
+              View &amp; Offer Help &rarr;
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Helpful Empty / Fallback State -->
+    <div class="empty-state-box">
+      <div class="empty-state-icon">
+        <i class="bi bi-lightning-charge"></i>
+      </div>
+      <h3>No Urgent Requests Match This Filter</h3>
+      <p>
+        Try widening your urgency tier, category, or location filters, or be the first student to post an urgent peer need for exams or practicals.
+      </p>
+      <div class="empty-state-actions">
+        <a href="{{ url_for('urgent.create') }}" class="btn btn-accent">
+          <i class="bi bi-plus-circle-fill"></i> Post an Urgent Request
+        </a>
+        <a href="{{ url_for('urgent.feed', all_locations='1', status='All') }}" class="btn btn-outline">
+          <i class="bi bi-globe-americas"></i> Show All Locations &amp; Expired
+        </a>
+        <a href="{{ url_for('urgent.feed') }}" class="btn btn-outline">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset All Filters
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  // Mobile Filter Panel Toggle (< 900px)
+  document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('mobileUrgentToggleBtn');
+    var filterPanel = document.getElementById('urgentFilterPanel');
+    
+    if (toggleBtn && filterPanel) {
+      toggleBtn.addEventListener('click', function() {
+        var isOpen = filterPanel.classList.toggle('is-open');
+        toggleBtn.classList.toggle('is-active', isOpen);
+      });
+    }
+  });
+</script>
+{% endblock %}

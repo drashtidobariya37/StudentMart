@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#faf8f5"/>
+  <rect x="40" y="40" width="520" height="320" rx="16" fill="#e7e5e0"/>
+  <g transform="translate(230, 90)">
+    <circle cx="70" cy="85" r="70" fill="#6366f1" fill-opacity="0.15"/>
+    <rect x="30" y="30" width="80" height="110" rx="8" fill="#0f172a"/>
+    <rect x="40" y="42" width="60" height="25" rx="3" fill="#cbd5e1"/>
+    <text x="94" y="60" font-family="monospace" font-size="14" fill="#0f172a" text-anchor="end">991EX</text>
+    <!-- Buttons grid -->
+    <rect x="40" y="75" width="12" height="10" rx="2" fill="#c25e3e"/>
+    <rect x="56" y="75" width="12" height="10" rx="2" fill="#c25e3e"/>
+    <rect x="72" y="75" width="12" height="10" rx="2" fill="#c25e3e"/>
+    <rect x="88" y="75" width="12" height="10" rx="2" fill="#c25e3e"/>
+    <rect x="40" y="90" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="56" y="90" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="72" y="90" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="88" y="90" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="40" y="105" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="56" y="105" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="72" y="105" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="88" y="105" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="40" y="120" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="56" y="120" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="72" y="120" width="12" height="10" rx="2" fill="#334155"/>
+    <rect x="88" y="120" width="12" height="10" rx="2" fill="#f59e0b"/>
+  </g>
+  <text x="300" y="295" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="middle">Scientific Calculators</text>
+  <text x="300" y="325" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="14" fill="#64748b" text-anchor="middle">Casio fx-991EX, fx-82MS &amp; Approved Calcs</text>
+</svg>

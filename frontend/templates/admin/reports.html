@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Trust &amp; Safety Reports &bull; Admin Portal{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <div style="font-size: 0.85rem; color: var(--text-muted);"><a href="{{ url_for('admin.dashboard') }}" style="color: inherit; text-decoration: none;">&larr; Admin Dashboard</a></div>
+    <h1 style="font-size: 1.85rem; color: var(--primary-navy); margin-top: 4px;">Trust &amp; Safety Reports Queue</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Review reports submitted by students regarding listings, conduct, or scams</p>
+  </div>
+
+  <div class="card" style="padding: 24px;">
+    {% if reports %}
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Reported Target</th>
+              <th>Reason</th>
+              <th>Details</th>
+              <th>Reporter</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Resolution Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+              <tr>
+                <td>#{{ r.id }}</td>
+                <td>
+                  {% if r.listing %}
+                    <div>
+                      <i class="bi bi-tag-fill" style="color: var(--accent-teal);"></i>
+                      <a href="{{ url_for('listings.detail', listing_id=r.listing.id) }}" target="_blank" style="font-weight: 600; color: var(--primary-navy);">
+                        {{ r.listing.title[:25] }}...
+                      </a>
+                    </div>
+                  {% endif %}
+                  {% if r.reported_user %}
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                      User: {{ r.reported_user.display_name }} ({{ r.reported_user.email }})
+                    </div>
+                  {% endif %}
+                </td>
+                <td><strong style="color: var(--primary-navy);">{{ r.reason }}</strong></td>
+                <td style="max-width: 250px; font-size: 0.85rem; line-height: 1.4;">{{ r.details }}</td>
+                <td>{{ r.reporter.display_name }}</td>
+                <td>
+                  <span class="badge {% if r.status == 'PENDING' %}badge-reserved{% elif r.status == 'ACTION_TAKEN' %}badge-danger{% else %}badge-available{% endif %}">
+                    {{ r.status }}
+                  </span>
+                </td>
+                <td style="font-size: 0.8rem; color: var(--text-muted);">{{ r.created_at.strftime('%d %b %Y') }}</td>
+                <td>
+                  {% if r.status == 'PENDING' %}
+                    <div style="display: flex; gap: 6px; flex-direction: column;">
+                      <form action="{{ url_for('admin.resolve_report', report_id=r.id) }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="HIDE_LISTING">
+                        <button type="submit" class="btn btn-danger btn-sm" style="width: 100%; font-size: 0.75rem; padding: 3px 6px;">
+                          Hide Listing
+                        </button>
+                      </form>
+
+                      <form action="{{ url_for('admin.resolve_report', report_id=r.id) }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="DISMISS">
+                        <button type="submit" class="btn btn-outline btn-sm" style="width: 100%; font-size: 0.75rem; padding: 3px 6px;">
+                          Dismiss
+                        </button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">Resolved</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); text-align: center; padding: 30px 0;">No reports filed.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

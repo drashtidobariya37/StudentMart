@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Messages Inbox &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 4px;">Direct Messages</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Private conversations between you and fellow campus students regarding listings</p>
+  </div>
+
+  {% if conversations %}
+    <div class="card" style="box-shadow: var(--shadow-sm); overflow: hidden;">
+      {% for conv in conversations %}
+        {% set other_user = conv.seller if current_user.id == conv.buyer_id else conv.buyer %}
+        {% set unread = conv.unread_count_for_user(current_user.id) %}
+        {% set last_msg = conv.last_message() %}
+
+        <a href="{{ url_for('messages.view', conversation_id=conv.id) }}" class="conversation-item" style="padding: 18px 20px;">
+          {% if other_user.profile_photo %}
+            <img src="{{ url_for('static', filename=other_user.profile_photo) }}" alt="" style="width: 48px; height: 48px; border-radius: var(--radius-full); object-fit: cover;">
+          {% else %}
+            <div class="avatar-initials" style="width: 48px; height: 48px; font-size: 1.1rem; flex-shrink: 0;">
+              {{ other_user.initials }}
+            </div>
+          {% endif %}
+
+          <div class="conversation-meta">
+            <div class="conversation-name-row">
+              <span class="conversation-name">
+                {{ other_user.display_name }}
+                {% if other_user.college %}
+                  <span style="font-weight: 400; color: var(--text-muted); font-size: 0.8rem;">&bull; {{ other_user.college.short_name }}</span>
+                {% endif %}
+              </span>
+              <span class="conversation-time">{{ conv.updated_at | time_ago }}</span>
+            </div>
+
+            <div class="conversation-item-title">
+              <i class="bi bi-tag-fill"></i> {{ conv.listing.title }} &bull; {{ conv.listing.price | currency_inr }}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+              <div class="conversation-snippet" style="{% if unread > 0 %}font-weight: 700; color: var(--primary-navy);{% endif %}">
+                {% if last_msg %}
+                  {% if last_msg.sender_id == current_user.id %}You: {% endif %}{{ last_msg.content }}
+                {% else %}
+                  Conversation started
+                {% endif %}
+              </div>
+              {% if unread > 0 %}
+                <span class="badge-count">{{ unread }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="padding: 60px 20px; text-align: center; border: 1px dashed var(--border-color);">
+      <div style="font-size: 3rem; color: #cbd5e1; margin-bottom: 12px;">
+        <i class="bi bi-chat-dots"></i>
+      </div>
+      <h3 style="font-size: 1.3rem; color: var(--primary-navy); margin-bottom: 8px;">No message threads yet</h3>
+      <p style="color: var(--text-muted); max-width: 420px; margin: 0 auto 20px; font-size: 0.92rem; line-height: 1.5;">
+        When you reach out to sellers on campus or buyers inquire about your items, your private conversations will appear here.
+      </p>
+      <a href="{{ url_for('listings.browse') }}" class="btn btn-primary">
+        Browse Campus Items
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

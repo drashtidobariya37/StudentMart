@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}Student Mart - Gujarat Student Marketplace &bull; Ahmedabad &amp; Gandhinagar Priority &bull; India{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container hero-content">
+    <h1 class="hero-title">Campus Marketplace for Gujarat Students</h1>
+    <p class="hero-subtitle">
+      Buy, sell, give away, lend, or borrow second-hand engineering textbooks, Casio scientific calculators, GTU notes, lab coats, mini drafters, and hostel gear. Serving students across all Indian states.
+    </p>
+
+    <!-- Search Box with City and Campus Selector -->
+    <form action="{{ url_for('listings.browse') }}" method="GET" class="hero-search-box">
+      <i class="bi bi-search" style="color: #94a3b8; font-size: 1.2rem; margin-left: 12px;"></i>
+      <input 
+        type="text" 
+        name="q" 
+        class="hero-search-input" 
+        placeholder="Search Casio 991EX, DBMS Notes, Lab Coat, Mini Drafter, Kettle..." 
+        aria-label="Search items"
+      >
+      <select name="city" class="hero-search-select" aria-label="Select city">
+        <option value="">All Gujarat &amp; India</option>
+        <option value="Ahmedabad" {% if selected_city == 'Ahmedabad' %}selected{% endif %}>Ahmedabad</option>
+        <option value="Gandhinagar" {% if selected_city == 'Gandhinagar' %}selected{% endif %}>Gandhinagar</option>
+        <option value="Surat">Surat</option>
+        <option value="Vadodara">Vadodara</option>
+        <option value="Rajkot">Rajkot</option>
+        <option value="Anand">Anand</option>
+      </select>
+      <button type="submit" class="btn btn-teal">Search Campus</button>
+    </form>
+
+    <!-- Quick Urgent Callout & Popular Searches -->
+    <div class="hero-quick-bar">
+      <div class="hero-urgent-cta">
+        <a href="{{ url_for('urgent.create') }}" class="btn btn-warning btn-sm">
+          <i class="bi bi-lightning-charge-fill"></i> Need Something Urgently for Exam / Lab?
+        </a>
+      </div>
+      <div class="popular-searches">
+        <span style="color: #94a3b8;">Trending in Gujarat:</span>
+        <a href="{{ url_for('listings.browse', q='Casio', city='Ahmedabad') }}">Casio 991EX</a> &bull;
+        <a href="{{ url_for('listings.browse', q='Lab Coat', city='Gandhinagar') }}">Lab Coat</a> &bull;
+        <a href="{{ url_for('listings.browse', q='GTU') }}">GTU Books</a> &bull;
+        <a href="{{ url_for('listings.browse', q='Drafter') }}">Mini Drafter</a> &bull;
+        <a href="{{ url_for('urgent.feed') }}" style="color: #f59e0b; font-weight: 600;">⚡ Urgent Feed</a>
+      </div>
+    </div>
+
+    <!-- Live Verified Database Stats Strip -->
+    <div class="stats-strip">
+      <div class="stat-item">
+        <div class="stat-icon"><i class="bi bi-lightning-charge-fill text-warning"></i></div>
+        <div class="stat-info">
+          <span>{{ active_urgent_count }} Active</span>
+          <span>Urgent Requests</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon"><i class="bi bi-geo-alt-fill text-teal"></i></div>
+        <div class="stat-info">
+          <span>{{ ahmedabad_count + gandhinagar_count }} In Hub</span>
+          <span>Ahmedabad &amp; Gandhinagar</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon"><i class="bi bi-tags"></i></div>
+        <div class="stat-info">
+          <span>{{ gujarat_listings_count }} Gujarat</span>
+          <span>Live Campus Items</span>
+        </div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-icon"><i class="bi bi-buildings"></i></div>
+        <div class="stat-info">
+          <span>{{ colleges_count }}+ Colleges</span>
+          <span>Verified Institutions</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <!-- ⚡ PROMINENT URGENT NEED SECTION -->
+  <div class="urgent-feature-section">
+    <div class="urgent-section-header">
+      <div class="urgent-title-group">
+        <div class="urgent-badge-pill">
+          <span class="urgent-pulse-dot"></span> ⚡ Urgent Need Spotlight
+        </div>
+        <h2>Students Needing Help Urgently</h2>
+        <p>Before exams, practicals, and assignment deadlines. Help a campus mate or post your own urgent need in seconds.</p>
+      </div>
+      <div class="urgent-action-group">
+        <a href="{{ url_for('urgent.create') }}" class="btn btn-warning">
+          <i class="bi bi-plus-circle-fill"></i> Post Urgent Need
+        </a>
+        <a href="{{ url_for('urgent.feed') }}" class="btn btn-outline btn-sm">
+          View All Requests ({{ active_urgent_count }}) &rarr;
+        </a>
+      </div>
+    </div>
+
+    {% if urgent_requests %}
+      <div class="grid-3 urgent-grid">
+        {% for req in urgent_requests %}
+          <div class="urgent-card {% if req.urgency == 'Within 1 hour' %}urgent-card-critical{% endif %}">
+            <div class="urgent-card-header">
+              <span class="urgency-tag urgency-{{ req.urgency | lower | replace(' ', '-') }}">
+                <i class="bi bi-alarm-fill"></i> {{ req.urgency }}
+              </span>
+              <span class="urgent-countdown" title="Time remaining before request expires">
+                <i class="bi bi-clock-history"></i> {{ req.time_remaining_str }}
+              </span>
+            </div>
+
+            <div class="urgent-card-body">
+              <h3 class="urgent-card-title">
+                <a href="{{ url_for('urgent.detail', request_id=req.id) }}">{{ req.title }}</a>
+              </h3>
+              <p class="urgent-card-desc">{{ req.description[:110] }}{% if req.description|length > 110 %}...{% endif %}</p>
+
+              <div class="urgent-meta-pills">
+                <span class="meta-pill"><i class="bi bi-folder2-open"></i> {{ req.category.split('&')[0] }}</span>
+                <span class="meta-pill"><i class="bi bi-geo-alt"></i> {{ req.city }} ({{ req.display_college }})</span>
+              </div>
+            </div>
+
+            <div class="urgent-card-footer">
+              <div class="urgent-budget">
+                {% if req.budget and req.budget > 0 %}
+                  <span class="budget-label">Budget:</span>
+                  <span class="budget-val">{{ req.budget | currency_inr }}</span>
+                {% else %}
+                  <span class="badge-free">Help / Borrow</span>
+                {% endif %}
+              </div>
+              <a href="{{ url_for('urgent.detail', request_id=req.id) }}" class="btn btn-sm btn-teal">
+                Help Student &rarr;
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="urgent-empty-box">
+        <i class="bi bi-lightning-charge" style="font-size: 2.5rem; color: #f59e0b;"></i>
+        <h4>No Active Urgent Needs Right Now</h4>
+        <p>Need a scientific calculator for today's lab, DBMS notes, or a drafter? Be the first to post!</p>
+        <a href="{{ url_for('urgent.create') }}" class="btn btn-warning mt-2">Post an Urgent Request</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- GUJARAT HUBS SELECTOR STRIP -->
+  <div class="section-header mt-5">
+    <div>
+      <h2>Explore Gujarat Campus Hubs</h2>
+      <p>Directly browse verified student inventory in your local city and surrounding university zones.</p>
+    </div>
+    <a href="{{ url_for('listings.browse', state='Gujarat') }}" class="btn btn-outline btn-sm">All Gujarat Listings ({{ gujarat_listings_count }}) &rarr;</a>
+  </div>
+
+  <div class="grid-4 city-hubs-grid">
+    {% for city in gujarat_cities %}
+      <a href="{{ url_for('listings.browse', city=city.name, state='Gujarat') }}" class="city-hub-card">
+        <div class="city-hub-badge">{{ city.badge }}</div>
+        <h3 class="city-hub-name"><i class="bi bi-geo-alt-fill text-teal"></i> {{ city.name }}</h3>
+        <p class="city-hub-tagline">{{ city.tagline }}</p>
+        <span class="city-hub-explore">Browse Campus Gear &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- AHMEDABAD & GANDHINAGAR SPOTLIGHT -->
+  <div class="section-header mt-5">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2>Ahmedabad &amp; Gandhinagar Spotlight</h2>
+        <span class="badge badge-teal">Primary Focus</span>
+      </div>
+      <p>Popular gear from Nirma University, DA-IICT, IIT Gandhinagar, PDEU, LDCE, and VGEC students.</p>
+    </div>
+    <a href="{{ url_for('listings.browse', city='Ahmedabad') }}" class="btn btn-outline btn-sm">Explore Hub &rarr;</a>
+  </div>
+
+  {% if ahmedabad_listings or gandhinagar_listings %}
+    <div class="grid-products">
+      {% for item in (ahmedabad_listings + gandhinagar_listings)[:8] %}
+        <div class="card product-card">
+          <div class="product-thumb-wrap">
+            <img src="{{ url_for('static', filename=item.primary_image_url) }}" alt="{{ item.title }}" class="product-thumb" loading="lazy" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/no-photo.svg') }}';">
+            <div class="product-badge-overlay">
+              {% if item.listing_type == 'Free' %}
+                <span class="badge badge-free-giveaway"><i class="bi bi-gift-fill"></i> Free Giveaway</span>
+              {% elif item.listing_type == 'Lend/Borrow' %}
+                <span class="badge badge-lend"><i class="bi bi-arrow-left-right"></i> Peer Lend</span>
+              {% else %}
+                <span class="badge badge-available"><i class="bi bi-check-circle-fill"></i> For Sale</span>
+              {% endif %}
+              <span class="badge badge-city-pill">{{ item.city }}</span>
+            </div>
+          </div>
+
+          <div class="product-body">
+            <div class="product-category-row">
+              <span class="product-category">{{ item.category.split('&')[0] }}</span>
+              <span class="product-condition-tag condition-tag-{{ item.condition | lower | replace(' ', '-') }}">{{ item.condition }}</span>
+            </div>
+
+            <a href="{{ url_for('listings.detail', listing_id=item.id) }}" class="product-title">
+              {{ item.title }}
+            </a>
+
+            <div class="product-college-row">
+              <i class="bi bi-geo-alt-fill" style="color: var(--accent-terracotta);"></i>
+              <span>{{ item.display_college }} &bull; {{ item.pickup_area }}</span>
+            </div>
+
+            <div class="product-price-row">
+              <div>
+                {% if item.listing_type == 'Free' %}
+                  <span class="price-current" style="font-weight: 700; color: var(--accent-terracotta);">FREE</span>
+                {% elif item.listing_type == 'Lend/Borrow' %}
+                  <span class="price-current">{% if item.price == 0 %}Free Lend{% else %}{{ item.price | currency_inr }}/term{% endif %}</span>
+                  {% if item.lend_deposit %}
+                    <span class="deposit-tag" title="Refundable security deposit">Dep: ₹{{ item.lend_deposit }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="price-current">{{ item.price | currency_inr }}</span>
+                  {% if item.original_price %}
+                    <span class="price-original">₹{{ item.original_price }}</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+              {% if item.savings_percentage and item.listing_type == 'For Sale' %}
+                <span class="badge-savings">{{ item.savings_percentage }}% OFF</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state-card">
+      <p>No listings currently found for Ahmedabad and Gandhinagar.</p>
+      <a href="{{ url_for('listings.create') }}" class="btn btn-teal">List an Item in Gujarat</a>
+    </div>
+  {% endif %}
+
+  <!-- THREE STUDENT EXCHANGE MODES: BUY, FREE GIVEAWAY, LEND/BORROW -->
+  <div class="modes-banner-section mt-5">
+    <div class="modes-banner-header">
+      <h2>Flexible Student Exchange Models</h2>
+      <p>Campus life is about helping each other. Choose the transaction model that fits your semester need.</p>
+    </div>
+    <div class="grid-3">
+      <div class="mode-card">
+        <div class="mode-icon"><i class="bi bi-cash-stack text-teal"></i></div>
+        <h3>Buy &amp; Sell</h3>
+        <p>Own textbooks, reference manuals, and calculators at 40-70% below MRP. Hand over cash or UPI at the student canteen.</p>
+        <a href="{{ url_for('listings.browse', listing_type='For Sale') }}" class="btn btn-outline btn-xs">Browse For Sale &rarr;</a>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon"><i class="bi bi-gift-fill" style="color: var(--accent-terracotta);"></i></div>
+        <h3>Free Giveaways</h3>
+        <p>Pass down completed handwritten semester notes, drawing sheets, or lab coats to junior batches at zero cost.</p>
+        <a href="{{ url_for('listings.browse', listing_type='Free') }}" class="btn btn-outline btn-xs">Find Free Items &rarr;</a>
+      </div>
+      <div class="mode-card">
+        <div class="mode-icon"><i class="bi bi-arrow-left-right text-warning"></i></div>
+        <h3>Lend &amp; Borrow</h3>
+        <p>Borrow a mini drafter for exam week or scientific calculator for practicals with clear return dates and refundable security deposits.</p>
+        <a href="{{ url_for('listings.browse', listing_type='Lend/Borrow') }}" class="btn btn-outline btn-xs">Browse Lending &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories Showcase -->
+  <div class="section-header mt-5">
+    <div>
+      <h2>Browse by Campus Category</h2>
+      <p>Essentials curated specifically for Indian engineering, science, and university courses.</p>
+    </div>
+    <a href="{{ url_for('listings.browse') }}" class="btn btn-outline btn-sm">View All Categories &rarr;</a>
+  </div>
+
+  <div class="grid-4">
+    {% for cat in categories %}
+      <a href="{{ url_for('listings.browse', category=cat.name) }}" class="category-card">
+        <div class="category-icon-wrap">
+          <i class="bi {{ cat.icon }}"></i>
+        </div>
+        <h3>{{ cat.name }}</h3>
+        <p>{{ cat.desc }}</p>
+        <span class="category-count">{{ cat.count }} items available &rarr;</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- India-Wide Recent Listings -->
+  <div class="section-header mt-5">
+    <div>
+      <h2>Fresh Listings Across India</h2>
+      <p>Recent second-hand student gear posted nationwide.</p>
+    </div>
+    <a href="{{ url_for('listings.browse', sort='newest', all_locations='1') }}" class="btn btn-outline btn-sm">View All India &rarr;</a>
+  </div>
+
+  {% if recent_listings %}
+    <div class="grid-products">
+      {% for item in recent_listings %}
+        <div class="card product-card">
+          <div class="product-thumb-wrap">
+            <img src="{{ url_for('static', filename=item.primary_image_url) }}" alt="{{ item.title }}" class="product-thumb" loading="lazy" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/no-photo.svg') }}';">
+            <div class="product-badge-overlay">
+              <span class="badge badge-available"><i class="bi bi-clock"></i> {{ item.created_at | time_ago }}</span>
+              {% if item.listing_type != 'For Sale' %}
+                <span class="badge badge-lend">{{ item.listing_type }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="product-body">
+            <div class="product-category-row">
+              <span class="product-category">{{ item.category.split('&')[0] }}</span>
+              <span class="product-condition-tag condition-tag-{{ item.condition | lower | replace(' ', '-') }}">{{ item.condition }}</span>
+            </div>
+
+            <a href="{{ url_for('listings.detail', listing_id=item.id) }}" class="product-title">
+              {{ item.title }}
+            </a>
+
+            <div class="product-college-row">
+              <i class="bi bi-geo-alt-fill" style="color: var(--accent-terracotta);"></i>
+              <span>{{ item.display_college }} &bull; {{ item.city }}</span>
+            </div>
+
+            <div class="product-price-row">
+              <div>
+                {% if item.listing_type == 'Free' %}
+                  <span class="price-current" style="font-weight: 700; color: var(--accent-terracotta);">FREE</span>
+                {% else %}
+                  <span class="price-current">{{ item.price | currency_inr }}</span>
+                  {% if item.original_price %}
+                    <span class="price-original">₹{{ item.original_price }}</span>
+                  {% endif %}
+                {% endif %}
+              </div>
+              {% if item.savings_percentage and item.listing_type == 'For Sale' %}
+                <span class="badge-savings">{{ item.savings_percentage }}% OFF</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Campus Safety Highlight Banner -->
+  <div class="safety-highlight-box mt-5">
+    <div>
+      <h3><i class="bi bi-shield-check"></i> Campus Safety Protocols</h3>
+      <p>
+        Always arrange handoffs in daylight at campus public meeting areas like the Central Library entrance, student canteen, or department quadrangle.
+        For peer lending, agree upon return inspection conditions and record security deposits clearly in writing.
+      </p>
+    </div>
+    <a href="{{ url_for('main.safety') }}" class="btn btn-teal" style="white-space: nowrap;">
+      Read Safety Protocols
+    </a>
+  </div>
+</div>
+{% endblock %}

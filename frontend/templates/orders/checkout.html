@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout &bull; {{ listing.title }} &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="margin-bottom: 24px;">
+    <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 4px;">Campus Safe Checkout</h1>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">Review order details and initiate student escrow hold</p>
+  </div>
+
+  <div class="card" style="padding: 28px; margin-bottom: 24px;">
+    <!-- Order Item Preview -->
+    <div style="display: flex; gap: 18px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); align-items: center; flex-wrap: wrap;">
+      <img src="{{ url_for('static', filename=listing.primary_image_url) }}" alt="{{ listing.title }}" style="width: 80px; height: 80px; border-radius: var(--radius-md); object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/misc.svg') }}';">
+      <div style="flex-grow: 1;">
+        <span class="product-category">{{ listing.category }}</span>
+        <h3 style="font-size: 1.2rem; color: var(--primary-navy); margin: 2px 0 6px;">{{ listing.title }}</h3>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Condition: <strong>{{ listing.condition }}</strong> &bull; Seller: <strong>{{ listing.seller.display_name }}</strong> ({{ listing.seller.display_college }})
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-navy);">{{ listing.price | currency_inr }}</div>
+        <div style="font-size: 0.78rem; color: var(--status-available);">Zero Platform Fee</div>
+      </div>
+    </div>
+
+    <!-- Official Peer-to-Peer UPI Disclaimer -->
+    <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; margin: 20px 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+      <strong style="color: var(--primary-navy);"><i class="bi bi-info-circle-fill" style="color: var(--accent-teal);"></i> Campus Handoff Policy:</strong><br>
+      {{ disclaimer }}
+    </div>
+
+    <!-- Checkout Form -->
+    <form action="{{ url_for('orders.checkout', listing_id=listing.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="pickup_location">Confirmed Campus Meeting Spot *</label>
+        <input type="text" id="pickup_location" name="pickup_location" class="form-control" value="{{ listing.pickup_area }}" required>
+        <div class="form-hint">Coordinate with seller (e.g. Central Library entrance, Student Activity Center, Main Canteen).</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="notes">Special Notes for Seller (Optional)</label>
+        <input type="text" id="notes" name="notes" class="form-control" placeholder="e.g. I am free between 2 PM - 4 PM after Thermodynamics lab">
+      </div>
+
+      <!-- Payment Method Selection -->
+      <div class="form-group" style="margin-top: 24px;">
+        <label class="form-label" style="font-size: 0.95rem;">Select Payment &amp; Escrow Mode *</label>
+
+        <!-- Option 1: Demo Escrow -->
+        <label style="display: flex; gap: 14px; padding: 16px; border: 2px solid var(--accent-terracotta); border-radius: var(--radius-md); background-color: var(--accent-terracotta-soft); margin-bottom: 12px; cursor: pointer;">
+          <input type="radio" name="payment_method" value="DEMO_ESCROW" checked style="margin-top: 3px;">
+          <div>
+            <div style="font-weight: 700; color: var(--primary-navy); display: flex; align-items: center; gap: 8px;">
+              <i class="bi bi-shield-check" style="color: var(--accent-terracotta);"></i> Campus Safe Demo Escrow (Simulated Sandbox)
+              <span class="badge badge-demo-sample" style="font-size: 0.72rem;">Recommended for Review</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; line-height: 1.5;">
+              Simulates immediate student escrow hold with zero real money charged. Funds are held in student escrow until you inspect the item on campus.
+            </div>
+          </div>
+        </label>
+
+        <!-- Option 2: Razorpay Test Mode -->
+        <label style="display: flex; gap: 14px; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-card); cursor: pointer;">
+          <input type="radio" name="payment_method" value="RAZORPAY_TEST" {% if not razorpay_enabled %}disabled{% endif %} style="margin-top: 3px;">
+          <div>
+            <div style="font-weight: 700; color: var(--primary-navy); display: flex; align-items: center; gap: 8px;">
+              <i class="bi bi-credit-card"></i> Razorpay Payment Gateway (Test Mode)
+              {% if not razorpay_enabled %}
+                <span class="badge" style="background-color: #f1f5f9; color: #64748b; font-size: 0.72rem;">Not Configured in .env</span>
+              {% else %}
+                <span class="badge badge-available" style="font-size: 0.72rem;">Active Sandbox</span>
+              {% endif %}
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+              {% if razorpay_enabled %}
+                Connects to official Razorpay Test Mode sandbox using HMAC-SHA256 signature verification.
+              {% else %}
+                To enable Razorpay test mode, supply <code>RAZORPAY_KEY_ID</code> and <code>RAZORPAY_KEY_SECRET</code> in <code>.env</code>. The built-in Demo Escrow above is always fully functional.
+              {% endif %}
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 14px;">
+        <a href="{{ url_for('listings.detail', listing_id=listing.id) }}" class="btn btn-outline">
+          &larr; Back to Item
+        </a>
+        <button type="submit" class="btn btn-teal btn-lg">
+          <i class="bi bi-lock-fill"></i> Confirm &amp; Place Escrow Order ({{ listing.price | currency_inr }})
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

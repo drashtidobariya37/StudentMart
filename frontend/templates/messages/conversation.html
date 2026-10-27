@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ other_user.display_name }} &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 20px; padding-bottom: 40px;">
+  <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+    <a href="{{ url_for('messages.inbox') }}" style="color: inherit; text-decoration: none;">&larr; Back to Messages Inbox</a>
+  </div>
+
+  <div class="chat-container">
+    <!-- Sidebar: Recent Conversations (Desktop) -->
+    <div class="chat-sidebar">
+      <div class="chat-sidebar-header">
+        <span>Conversations</span>
+        <a href="{{ url_for('messages.inbox') }}" style="font-size: 0.8rem; color: var(--accent-teal); text-decoration: none;">View All</a>
+      </div>
+      <div class="conversations-list">
+        {% for c in all_conversations %}
+          {% set ou = c.seller if current_user.id == c.buyer_id else c.buyer %}
+          <a href="{{ url_for('messages.view', conversation_id=c.id) }}" class="conversation-item {% if c.id == conversation.id %}active{% endif %}">
+            <div class="avatar-initials" style="width: 36px; height: 36px; font-size: 0.85rem; flex-shrink: 0;">
+              {{ ou.initials }}
+            </div>
+            <div class="conversation-meta">
+              <div class="conversation-name">{{ ou.display_name }}</div>
+              <div class="conversation-item-title">{{ c.listing.title[:24] }}...</div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Main Chat Window -->
+    <div class="chat-main">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="avatar-initials" style="width: 40px; height: 40px; font-size: 0.95rem;">
+            {{ other_user.initials }}
+          </div>
+          <div>
+            <div style="font-weight: 700; color: var(--primary-navy); font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+              {{ other_user.display_name }}
+              {% if other_user.is_verified_student %}
+                <span class="badge badge-verified-student" title="Verified Campus Student">
+                  <i class="bi bi-patch-check-fill"></i> Verified
+                </span>
+              {% endif %}
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">
+              {{ other_user.college.name if other_user.college else 'Campus Student' }}
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-outline btn-sm" style="color: var(--status-danger); border-color: #fca5a5;" data-modal-target="reportUserModal">
+          <i class="bi bi-flag"></i> Report
+        </button>
+      </div>
+
+      <!-- Linked Product Context Strip -->
+      <div class="chat-item-context">
+        <img src="{{ url_for('static', filename=conversation.listing.primary_image_url) }}" alt="" style="width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/misc.svg') }}';">
+        <div style="flex-grow: 1; overflow: hidden;">
+          <a href="{{ url_for('listings.detail', listing_id=conversation.listing.id) }}" style="font-weight: 600; color: var(--primary-navy); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            {{ conversation.listing.title }}
+          </a>
+          <span style="color: var(--accent-teal); font-weight: 700;">{{ conversation.listing.price | currency_inr }}</span> &bull;
+          <span style="color: var(--text-muted);">Pickup: {{ conversation.listing.pickup_area }}</span>
+        </div>
+
+        {% if current_user.id == conversation.buyer_id and conversation.listing.status == 'Available' %}
+          <a href="{{ url_for('orders.checkout', listing_id=conversation.listing.id) }}" class="btn btn-teal btn-sm" style="flex-shrink: 0;">
+            <i class="bi bi-bag-check-fill"></i> Buy Item
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Safety Notice Strip -->
+      <div style="background-color: #fffbeb; padding: 6px 20px; font-size: 0.75rem; color: #92400e; border-bottom: 1px solid #fde68a; display: flex; align-items: center; gap: 6px;">
+        <i class="bi bi-shield-exclamation"></i>
+        <span><strong>Safety Reminder:</strong> Meet in daylight at designated campus spots. Never scan advance QR codes or enter your UPI PIN to receive payment.</span>
+      </div>
+
+      <!-- Messages Thread -->
+      <div class="chat-messages" id="chatMessages" data-conversation-id="{{ conversation.id }}">
+        {% for msg in conversation.messages %}
+          <div class="message-bubble {% if msg.sender_id == current_user.id %}message-mine{% else %}message-theirs{% endif %}">
+            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-time">
+              {{ msg.created_at.strftime('%I:%M %p') }}
+              {% if msg.sender_id == current_user.id %}
+                {% if msg.is_read %}
+                  <i class="bi bi-check2-all" title="Read" style="color: #5eead4;"></i>
+                {% else %}
+                  <i class="bi bi-check2" title="Delivered"></i>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Reply Box -->
+      <div class="chat-input-bar">
+        <form id="chatForm" action="{{ url_for('messages.send_message', conversation_id=conversation.id) }}" method="POST" class="chat-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input 
+            type="text" 
+            id="messageInput" 
+            name="content" 
+            class="form-control" 
+            placeholder="Type your message to {{ other_user.display_name.split()[0] }}..." 
+            autocomplete="off" 
+            required 
+            style="border-radius: var(--radius-full);"
+          >
+          <button type="submit" class="btn btn-teal" style="border-radius: var(--radius-full); padding: 10px 20px;">
+            <i class="bi bi-send-fill"></i> Send
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Report User Modal -->
+<div class="modal-backdrop" id="reportUserModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="bi bi-flag-fill" style="color: var(--status-danger);"></i> Report Suspicious Conduct</h3>
+      <button type="button" class="modal-close-btn">&times;</button>
+    </div>
+
+    <form action="{{ url_for('messages.report_conversation', conversation_id=conversation.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label" for="user_report_reason">Reason for Report *</label>
+        <select id="user_report_reason" name="reason" class="form-control" required>
+          <option value="Harassment / Inappropriate Behavior">Harassment or Inappropriate Behavior</option>
+          <option value="Off-Platform Scam / Fake Payment Links">Off-Platform Scam / Suspicious Payment Link</option>
+          <option value="No Show / Abandoned Campus Handoff">No-Show / Abandoned Campus Handoff</option>
+          <option value="Selling Prohibited Goods">Attempting to Sell Prohibited Goods</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="report_details">Details for Moderation *</label>
+        <textarea id="report_details" name="details" rows="4" class="form-control" placeholder="Provide context or paste relevant message excerpts..." required></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" class="btn btn-outline modal-close-btn">Cancel</button>
+        <button type="submit" class="btn btn-danger">Submit User Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

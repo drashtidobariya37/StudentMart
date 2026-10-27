@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}My Campus Listings &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 36px; padding-bottom: 50px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 2rem; color: var(--primary-navy); margin-bottom: 4px;">My Campus Listings</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">Manage inventory, update availability status, and track buyer interest</p>
+    </div>
+    <a href="{{ url_for('listings.create') }}" class="btn btn-teal">
+      <i class="bi bi-plus-circle"></i> Create New Listing
+    </a>
+  </div>
+
+  <!-- Summary Stats Strip -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px;">
+    <div class="stat-card">
+      <div class="stat-label">Active For Sale</div>
+      <div class="stat-number" style="color: var(--status-available);">{{ active_items|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Reserved by Buyers</div>
+      <div class="stat-number" style="color: var(--status-reserved);">{{ reserved_items|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Sold Completed</div>
+      <div class="stat-number" style="color: var(--status-sold);">{{ sold_items|length }}</div>
+    </div>
+  </div>
+
+  <!-- Active Listings -->
+  <div class="card" style="margin-bottom: 28px; padding: 24px;">
+    <h2 style="font-size: 1.3rem; color: var(--primary-navy); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+      <i class="bi bi-check-circle-fill" style="color: var(--status-available);"></i> Active Listings ({{ active_items|length }})
+    </h2>
+
+    {% if active_items %}
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Views</th>
+              <th>Campus Spot</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in active_items %}
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <img src="{{ url_for('static', filename=item.primary_image_url) }}" alt="" style="width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover;" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/placeholders/misc.svg') }}';">
+                    <a href="{{ url_for('listings.detail', listing_id=item.id) }}" style="font-weight: 600; color: var(--primary-navy); text-decoration: none;">
+                      {{ item.title }}
+                    </a>
+                  </div>
+                </td>
+                <td>{{ item.category }}</td>
+                <td style="font-weight: 700;">{{ item.price | currency_inr }}</td>
+                <td>{{ item.view_count }}</td>
+                <td>{{ item.pickup_area }}</td>
+                <td>
+                  <div style="display: flex; gap: 6px;">
+                    <a href="{{ url_for('listings.edit', listing_id=item.id) }}" class="btn btn-outline btn-sm">Edit</a>
+                    <form action="{{ url_for('listings.toggle_status', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="status" value="Reserved">
+                      <button type="submit" class="btn btn-outline btn-sm" title="Mark Reserved">Reserve</button>
+                    </form>
+                    <form action="{{ url_for('listings.delete', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-danger btn-sm" data-confirm="Delete this listing?">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); font-size: 0.9rem;">You have no active listings right now.</p>
+    {% endif %}
+  </div>
+
+  <!-- Reserved Listings -->
+  {% if reserved_items %}
+    <div class="card" style="margin-bottom: 28px; padding: 24px;">
+      <h2 style="font-size: 1.3rem; color: var(--primary-navy); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <i class="bi bi-clock-history" style="color: var(--status-reserved);"></i> Reserved Listings ({{ reserved_items|length }})
+      </h2>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Campus Spot</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in reserved_items %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('listings.detail', listing_id=item.id) }}" style="font-weight: 600; color: var(--primary-navy); text-decoration: none;">
+                    {{ item.title }}
+                  </a>
+                </td>
+                <td style="font-weight: 700;">{{ item.price | currency_inr }}</td>
+                <td>{{ item.pickup_area }}</td>
+                <td><span class="badge badge-reserved">Reserved</span></td>
+                <td>
+                  <div style="display: flex; gap: 6px;">
+                    <form action="{{ url_for('listings.toggle_status', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="status" value="Available">
+                      <button type="submit" class="btn btn-outline btn-sm">Make Available</button>
+                    </form>
+                    <form action="{{ url_for('listings.toggle_status', listing_id=item.id) }}" method="POST" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="status" value="Sold">
+                      <button type="submit" class="btn btn-outline btn-sm">Mark Sold</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Sold Listings -->
+  {% if sold_items %}
+    <div class="card" style="padding: 24px;">
+      <h2 style="font-size: 1.3rem; color: var(--primary-navy); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <i class="bi bi-bag-check" style="color: var(--status-sold);"></i> Completed &amp; Sold ({{ sold_items|length }})
+      </h2>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Sale Price</th>
+              <th>Sold Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in sold_items %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('listings.detail', listing_id=item.id) }}" style="color: var(--text-muted); text-decoration: none;">
+                    {{ item.title }}
+                  </a>
+                </td>
+                <td>{{ item.price | currency_inr }}</td>
+                <td>{{ item.updated_at.strftime('%b %d, %Y') }}</td>
+                <td><span class="badge badge-sold">Sold Out</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

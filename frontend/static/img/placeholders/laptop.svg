@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#faf8f5"/>
+  <rect x="40" y="40" width="520" height="320" rx="16" fill="#e7e5e0"/>
+  <g transform="translate(220, 100)">
+    <circle cx="80" cy="80" r="70" fill="#0284c7" fill-opacity="0.15"/>
+    <rect x="35" y="40" width="90" height="60" rx="4" fill="#0f172a"/>
+    <rect x="42" y="47" width="76" height="46" fill="#38bdf8"/>
+    <path d="M25 106 L135 106 L145 116 L15 116 Z" fill="#475569"/>
+    <circle cx="80" cy="111" r="2" fill="#94a3b8"/>
+  </g>
+  <text x="300" y="295" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="middle">Electronics &amp; Laptops</text>
+  <text x="300" y="325" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="14" fill="#64748b" text-anchor="middle">Monitors, Keyboards, Dev Kits &amp; Accessories</text>
+</svg>

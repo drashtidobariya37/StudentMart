@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Contact &amp; Support &bull; Student Mart{% endblock %}
+
+{% block content %}
+<div class="container container-narrow" style="padding-top: 40px;">
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="font-size: 2.2rem; color: var(--primary-navy); margin-bottom: 8px;">Contact &amp; Campus Support</h1>
+    <p style="color: var(--text-muted); font-size: 1.05rem;">
+      Need help with an order, want to report a safety concern, or request your university to be added? Reach out to the student moderation team.
+    </p>
+  </div>
+
+  <div class="card" style="padding: 32px; box-shadow: var(--shadow-md);">
+    <form action="{{ url_for('main.contact') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="name">Your Full Name *</label>
+          <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Aarav Sharma" required value="{{ current_user.display_name if current_user else '' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">College Email Address *</label>
+          <input type="email" id="email" name="email" class="form-control" placeholder="e.g. rollno@college.ac.in" required value="{{ current_user.email if current_user else '' }}">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="college">University / Campus</label>
+          <input type="text" id="college" name="college" class="form-control" placeholder="e.g. COEP Tech Pune / RVCE Bengaluru" value="{{ current_user.college.name if current_user and current_user.college else '' }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="subject">Inquiry Subject *</label>
+          <select id="subject" name="subject" class="form-control" required>
+            <option value="">Select a topic...</option>
+            <option value="Campus Onboarding Request">Add My College to Student Mart</option>
+            <option value="Order Dispute Assistance">Order or Campus Handoff Issue</option>
+            <option value="Trust & Safety Alert">Report Suspicious Activity / User</option>
+            <option value="Technical Feedback">Bug Report or Feature Suggestion</option>
+            <option value="General Question">General Inquiry</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="message">Detailed Message *</label>
+        <textarea id="message" name="message" rows="5" class="form-control" placeholder="Please provide specific details, including order ID or listing title if applicable..." required></textarea>
+        <div class="form-hint">Our student administrators review all submissions and respond via verified email within 24 hours.</div>
+      </div>
+
+      <button type="submit" class="btn btn-teal btn-lg btn-block" style="margin-top: 10px;">
+        <i class="bi bi-send-fill"></i> Submit Message
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

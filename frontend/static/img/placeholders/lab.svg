@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <rect width="600" height="400" fill="#faf8f5"/>
+  <rect x="40" y="40" width="520" height="320" rx="16" fill="#e7e5e0"/>
+  <g transform="translate(220, 95)">
+    <circle cx="80" cy="80" r="70" fill="#c25e3e" fill-opacity="0.15"/>
+    <path d="M72 35 L88 35 L88 65 L115 115 C118 122 113 128 105 128 L55 128 C47 128 42 122 45 115 L72 65 Z" fill="#0f172a"/>
+    <path d="M57 110 L103 110 L94 95 L66 95 Z" fill="#c25e3e"/>
+    <circle cx="75" cy="103" r="3" fill="#ffffff"/>
+    <circle cx="88" cy="100" r="2" fill="#ffffff"/>
+  </g>
+  <text x="300" y="295" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="600" fill="#0f172a" text-anchor="middle">Lab Equipment &amp; Coats</text>
+  <text x="300" y="325" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="14" fill="#64748b" text-anchor="middle">Lab Coats, Breadboards, Safety Gear &amp; Meters</text>
+</svg>
